@@ -26,11 +26,10 @@
 success_t
 blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
-    if(!blfHandleIsInitialized(h)) goto fail;
-    if(pBase == 0) goto fail;
-    if(!blfPeekObjectInternal(h, pBase)) goto fail;
+    if (!blfHandleIsInitialized(h)) goto fail;
+    if (pBase == 0) goto fail;
+    if (!blfPeekObjectInternal(h, pBase)) goto fail;
     return 1;
-
 fail:
     return 0;
 }
@@ -71,8 +70,8 @@ blfGetFileStatisticsEx(BLFHANDLE h, VBLFileStatisticsEx* pStatistics)
 {
     unsigned int nBytes;
 
-    if(!blfHandleIsInitialized(h)) goto fail;
-    if(pStatistics == NULL) goto fail;
+    if (!blfHandleIsInitialized(h)) goto fail;
+    if (pStatistics == NULL) goto fail;
 
     nBytes = BLFMIN(h->mStatistics.mStatisticsSize, pStatistics->mStatisticsSize);
     memcpy(pStatistics, &h->mStatistics, nBytes);
