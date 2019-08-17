@@ -43,7 +43,7 @@ extern "C" {
 void      blfMemZero(uint8_t *mem, const size_t n);
 success_t blfHandleIsInitialized(BLFHANDLE h);
 success_t blfPeekObjectInternal(BLFHANDLE hFile, VBLObjectHeaderBase *pBase);
-BLFHANDLE  blfHandleInit(BLFHANDLE this);
+BLFHANDLE blfHandleInit(BLFHANDLE this);
 success_t blfHandleOpen(BLFHANDLE h, FILE *fp);
 success_t blfHandleRead(BLFHANDLE h, uint8_t fileOnlyBit, uint8_t *dest_ptr,
                         uint32_t nBytes);

@@ -31,6 +31,10 @@
 #include "dbctypes.h"
 #include "measurement.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* blfRead function */
 void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 

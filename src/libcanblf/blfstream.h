@@ -41,10 +41,10 @@ typedef int success_t;
  * remaining bytes
  */
 typedef struct{
-  FILE      *mFile;      /* FILE pointer to associated stream */
-  uint32_t   mBytesLeft; /* number of bytes left in stream */
-  uint8_t   *mBuffer;    /* pointer to allocated memory for a
-                            memory-based stream */
+    FILE      *mFile;      /* FILE pointer to associated stream */
+    uint32_t   mBytesLeft; /* number of bytes left in stream */
+    uint8_t   *mBuffer;    /* pointer to allocated memory for a
+                              memory-based stream */
 } SizedStream;
 
 /*
@@ -53,8 +53,8 @@ typedef struct{
  * fileStream is used.
  */
 typedef struct {
-  SizedStream fileStream;
-  SizedStream memStream;
+    SizedStream fileStream;
+    SizedStream memStream;
 } DualStream;
 
 success_t blfSizedStreamInitFromMem(SizedStream *const m, void *buffer,

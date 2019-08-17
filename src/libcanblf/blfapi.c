@@ -26,148 +26,148 @@
 success_t
 blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
-  if(!blfHandleIsInitialized(h)) goto fail;
-  if(pBase == 0) goto fail;
-  if(!blfPeekObjectInternal(h, pBase)) goto fail;
-  return 1;
+    if(!blfHandleIsInitialized(h)) goto fail;
+    if(pBase == 0) goto fail;
+    if(!blfPeekObjectInternal(h, pBase)) goto fail;
+    return 1;
 
 fail:
-  return 0;
+    return 0;
 }
 
 /* open a BLF file for reading */
 BLFHANDLE
 blfCreateFile(FILE *fp)
 {
-  BLFHANDLE h = (BLFHANDLE)malloc(sizeof(*h));
+    BLFHANDLE h = (BLFHANDLE)malloc(sizeof(*h));
 
-  if(h == NULL) goto fail;
-  blfHandleInit(h);
-  if(!blfHandleOpen(h, fp)) goto fail;
-  return h;
+    if(h == NULL) goto fail;
+    blfHandleInit(h);
+    if(!blfHandleOpen(h, fp)) goto fail;
+    return h;
 
 fail:
-  if(h != NULL) free(h);
-  fprintf(stderr,"blfCreateFile() failed\n");
-  return NULL;
+    if(h != NULL) free(h);
+    fprintf(stderr,"blfCreateFile() failed\n");
+    return NULL;
 }
 
 /* close BLFHANDLE */
 success_t
 blfCloseHandle(BLFHANDLE h)
 {
-  return    blfHandleIsInitialized(h)
-         && blfHandleClose(h);
+    return    blfHandleIsInitialized(h)
+        && blfHandleClose(h);
 }
 
 /* retrieve VBLFileStatisticsEx data */
 success_t
 blfGetFileStatisticsEx(BLFHANDLE h, VBLFileStatisticsEx* pStatistics)
 {
-  unsigned int nBytes;
+    unsigned int nBytes;
 
-  if(!blfHandleIsInitialized(h)) goto fail;
-  if(pStatistics == NULL) goto fail;
+    if(!blfHandleIsInitialized(h)) goto fail;
+    if(pStatistics == NULL) goto fail;
 
-  nBytes = BLFMIN(h->mStatistics.mStatisticsSize, pStatistics->mStatisticsSize);
-  memcpy(pStatistics, &h->mStatistics, nBytes);
-  pStatistics->mStatisticsSize = nBytes;
-  return 1;
+    nBytes = BLFMIN(h->mStatistics.mStatisticsSize, pStatistics->mStatisticsSize);
+    memcpy(pStatistics, &h->mStatistics, nBytes);
+    pStatistics->mStatisticsSize = nBytes;
+    return 1;
 
 fail:
-  return 0;
+    return 0;
 }
 
 /* read next object */
 success_t
 blfReadObject(BLFHANDLE hFile, VBLObjectHeaderBase *pBase)
 {
-  success_t success = 0;
+    success_t success = 0;
 
-  switch(pBase->mObjectType) {
+    switch(pBase->mObjectType) {
     case BL_OBJ_TYPE_CAN_DRIVER_ERROR:
     case BL_OBJ_TYPE_CAN_ERROR_EXT:
     case BL_OBJ_TYPE_CAN_MESSAGE:
     case BL_OBJ_TYPE_CAN_MESSAGE2:
     case BL_OBJ_TYPE_LOG_CONTAINER:
-      success = blfHandleRead(hFile, 0, (uint8_t *)&pBase[1],
-          pBase->mObjectSize - sizeof(*pBase));
-      break;
+        success = blfHandleRead(hFile, 0, (uint8_t *)&pBase[1],
+                                pBase->mObjectSize - sizeof(*pBase));
+        break;
     default:
-      fprintf(stderr, "blfReadObject: mObjectType not "
+        fprintf(stderr, "blfReadObject: mObjectType not "
                 "implemented: %d\n", pBase->mObjectType);
-      success = 0;
-      break;
-  }
+        success = 0;
+        break;
+    }
 
-  if(success) {
-    hFile->mStatistics.mObjectsRead++;
-  }
+    if(success) {
+        hFile->mStatistics.mObjectsRead++;
+    }
 
-  return success;
+    return success;
 }
 
 /* read next object into size-limited memory */
 success_t
 blfReadObjectSecure(BLFHANDLE h, VBLObjectHeaderBase* pBase,
-        size_t expectedSize)
+                    size_t expectedSize)
 {
-  if(!blfHandleIsInitialized(h)) goto fail;
+    if(!blfHandleIsInitialized(h)) goto fail;
 
-  if(pBase == NULL)              goto fail;
+    if(pBase == NULL)              goto fail;
 
-  if(pBase->mObjectSize > expectedSize) {
-    /* allocate additional memory to read from handle */
-    VBLObjectHeaderBase *obj =
-      (VBLObjectHeaderBase *)malloc(pBase->mObjectSize);
-    if(obj == NULL) {
-      fprintf(stderr, "Allocation of VBLObjectHeaderBase "
-        "with size %u failed.",(uint32_t)pBase->mObjectSize);
-      goto fail;
+    if(pBase->mObjectSize > expectedSize) {
+        /* allocate additional memory to read from handle */
+        VBLObjectHeaderBase *obj =
+            (VBLObjectHeaderBase *)malloc(pBase->mObjectSize);
+        if(obj == NULL) {
+            fprintf(stderr, "Allocation of VBLObjectHeaderBase "
+                    "with size %u failed.",(uint32_t)pBase->mObjectSize);
+            goto fail;
+        }
+        blfVBLObjectHeaderBaseCopy(obj, pBase);
+        if(!blfReadObject(h, obj)) {
+            free(obj);
+            goto fail;
+        }
+
+        /* copy expected bytes back to pBase */
+        memcpy(pBase, obj, expectedSize); // FIXME: obj is leak'd?
+    } else {
+        if(!blfReadObject(h, pBase)) goto fail;
+
+        /* less bytes read than expected? -> clear remaining bytes */
+        if(pBase->mObjectSize < expectedSize) {
+            blfMemZero((uint8_t *)pBase + pBase->mObjectSize,
+                       expectedSize - (size_t)pBase->mObjectSize);
+        }
     }
-    blfVBLObjectHeaderBaseCopy(obj, pBase);
-    if(!blfReadObject(h, obj)) {
-       free(obj);
-       goto fail;
-    }
-
-    /* copy expected bytes back to pBase */
-    memcpy(pBase, obj, expectedSize);
-  } else {
-    if(!blfReadObject(h, pBase)) goto fail;
-
-    /* less bytes read than expected? -> clear remaining bytes */
-    if(pBase->mObjectSize < expectedSize) {
-      blfMemZero((uint8_t *)pBase + pBase->mObjectSize,
-     expectedSize - (size_t)pBase->mObjectSize);
-    }
-  }
-  return 1;
+    return 1;
 
 fail:
-  return 0;
+    return 0;
 }
 
 /* free object data */
 success_t
 blfFreeObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
-  return blfHandleIsInitialized(h)
-      && (pBase != NULL)
-      && blfFreeHeader(h, (VBLObjectHeader *)pBase);
+    return blfHandleIsInitialized(h)
+        && (pBase != NULL)
+        && blfFreeHeader(h, (VBLObjectHeader *)pBase);
 }
 
 /* skip next object */
 success_t
 blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
-  success_t success = 
-           blfHandleIsInitialized(h)
+    success_t success =
+        blfHandleIsInitialized(h)
         && (pBase != NULL)
         && (pBase->mObjectSize >= pBase->mHeaderSize)
         && blfHandleSkip(h, pBase->mObjectSize - 16);
-  if(success) {
-    h->mStatistics.mObjectsRead++;
-  }
-  return success;
+    if(success) {
+        h->mStatistics.mObjectsRead++;
+    }
+    return success;
 }
