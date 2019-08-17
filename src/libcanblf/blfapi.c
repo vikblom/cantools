@@ -39,6 +39,7 @@ fail:
 BLFHANDLE
 blfCreateFile(FILE *fp)
 {
+    // FIXME: This is leak'd
     BLFHANDLE h = (BLFHANDLE)malloc(sizeof(*h));
 
     if(h == NULL) goto fail;
@@ -56,8 +57,12 @@ fail:
 success_t
 blfCloseHandle(BLFHANDLE h)
 {
-    return    blfHandleIsInitialized(h)
-        && blfHandleClose(h);
+    if (!blfHandleIsInitialized(h))
+        return 0;
+    if (!blfHandleClose(h))
+        return 0;
+    free(h);
+    return 1;
 }
 
 /* retrieve VBLFileStatisticsEx data */
@@ -133,6 +138,7 @@ blfReadObjectSecure(BLFHANDLE h, VBLObjectHeaderBase* pBase,
 
         /* copy expected bytes back to pBase */
         memcpy(pBase, obj, expectedSize); // FIXME: obj is leak'd?
+        free(obj);
     } else {
         if(!blfReadObject(h, pBase)) goto fail;
 

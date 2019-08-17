@@ -206,6 +206,7 @@ blfHandleRead(BLFHANDLE h, uint8_t fileOnlyBit, uint8_t *dest_ptr,
 success_t
 blfHandleSkipPadding(BLFHANDLE h, uint32_t nBytes)
 {
+    // TODO: Is this really correct, for 1 this skips 1 byte, landing a 2?
     return ((nBytes & 3) == 0) || blfHandleRead(h, 0, NULL, nBytes & 3);
 }
 
