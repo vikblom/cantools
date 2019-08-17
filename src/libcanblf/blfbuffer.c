@@ -42,7 +42,7 @@ static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
 
 static void blfBufferPrint(struct BlfBuffer *buf)
 {
-    printf("Position: %ld\t\tSize: %ld\t\tCapacity: %ld\n",
+    printf("Position: %zu\t\tSize: %zu\t\tCapacity: %zu\n",
            buf->position, buf->size, buf->capacity);
 }
 
@@ -142,12 +142,9 @@ static int blfBufferRefill(struct BlfBuffer *buf)
 
 int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n)
 {
-    if (buf->size < n) {
-        printf("Need to grab more data\n");
-        if (blfBufferRefill(buf)) {
-            fprintf(stderr, "Refill failed\n");
-            return 1;
-        }
+    if (buf->size < n && blfBufferRefill(buf)) {
+        fprintf(stderr, "Refill failed\n");
+        return 1;
     }
 
     memcpy(dest, buf->buffer + buf->position, n);
@@ -156,6 +153,11 @@ int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n)
 
 int blfBufferSkip(struct BlfBuffer *buf, size_t n)
 {
+    if (buf->size < n && blfBufferRefill(buf)) {
+        fprintf(stderr, "Refill failed\n");
+        return 1;
+    }
+
     n += n % 4; // Align
     buf->position += n;
     buf->size -= n;
@@ -224,19 +226,24 @@ int main(int argc, char *argv[])
     struct BlfBuffer buf;
     blfBufferCreate(&buf, fp);
 
+    blfBufferRefill(&buf);
+
     size_t count = 0;
-    int err = 0;
     VBLObjectHeaderBase base;
-    for (count = 0; count < 5000; count++) {
+    do {
         if (blfBufferPeek(&buf, &base, sizeof(base)))
             break;
         if (blfBufferSkip(&buf, base.mObjectSize))
             break;
-    }
+        count++;
+    } while (1);
+
+    printf("Done! Read %ld objects\n", count);
     blfBufferPrint(&buf);
 
-    printf("Read %ld objects\n", count);
+
     blfBufferDestroy(&buf);
+
 
 
     fclose(fp);
