@@ -23,6 +23,7 @@
 #include "blfparser.c"
 #include "blfbuffer.h"
 
+#define BLFMIN(x,y) ((x)<(y)?(x):(y))
 
 /* open a BLF file for reading */
 BLFHANDLE

@@ -20,6 +20,7 @@ int blfBufferCreate(BlfBuffer *buf, FILE *file);
 void blfBufferDestroy(BlfBuffer *buf);
 int blfBufferRead(BlfBuffer *buf, void *dest, size_t n);
 int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n);
+int blfBufferSkip(BlfBuffer *buf, size_t n);
 
 
 #ifdef __cplusplus
