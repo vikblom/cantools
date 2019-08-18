@@ -25,11 +25,11 @@ ACLOCAL_AMFLAGS= -I m4
 LEX=@LEX@
 YACC=@YACC@
 
-#	
+#
 # What to build and install
 #
 lib_LTLIBRARIES = libcandbc.la libcanasc.la libcanmdf.la libcanvsb.la \
-	          libcanclg.la libcanblf.la
+		          libcanclg.la libcanblf.la
 
 bin_PROGRAMS	= dbccopy dbcls
 if MATLAB
@@ -100,7 +100,7 @@ matdump_CPPFLAGS  = @MATIO_CFLAGS@
 matdump_LDADD	= @MATIO_LIBS@ @ZLIB_LIBS@ $(HDF5_LIB) @LIBOBJS@
 
 # additional include pathes necessary
-AM_CPPFLAGS = 
+AM_CPPFLAGS =
 DEFS = $(YYDEBUG) @DEFS@
 
 # YACC: generate token defines for LEX
@@ -125,6 +125,7 @@ include_HEADERS= src/libcandbc/dbcmodel.h \
 		 src/libcanblf/blfapi.h \
 		 src/libcanblf/blfstream.h \
 		 src/libcanblf/blfparser.h \
+		 src/libcanblf/blfbuffer.h \
 		 src/libcanvsb/vsbreader.h \
 		 src/libcanclg/clgreader.h \
 		 src/cantomat/messagedecoder.h \
@@ -145,6 +146,7 @@ libcandbc_la_LIBADD= -lm
 libcanasc_la_SOURCES= src/libcanasc/ascreader.c
 
 libcanblf_la_SOURCES= src/libcanblf/blfreader.c \
+		              src/libcanblf/blfbuffer.c \
 		              src/libcanblf/blfparser.c \
 				      src/libcanblf/blfstream.c \
 		     		  src/libcanblf/blfapi.c
