@@ -4,6 +4,15 @@
 #include <assert.h>
 #include <zlib.h>
 
+#include "cantools_config.h"
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 #include "blfbuffer.h"
 #include "blfapi.h"
 
@@ -39,12 +48,13 @@ static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
     return 1;
 }
 
-
-static void blfBufferPrint(struct BlfBuffer *buf)
+#if 0
+static void blfBufferDump(struct BlfBuffer *buf)
 {
     printf("Position: %zu\t\tSize: %zu\t\tCapacity: %zu\n",
            buf->position, buf->size, buf->capacity);
 }
+#endif
 
 
 // Manipulates buffer so that n_incoming bytes can be appended.
@@ -202,6 +212,35 @@ void blfBufferDestroy(struct BlfBuffer *buf)
 }
 
 
+#ifdef BLF_BUFFER_MAIN
+// Lists how many objects of each kind (id < 256) there are in the file.
+// Useful for sanity checking after changes.
+static void summarizeBlf(FILE *fp)
+{
+    struct BlfBuffer buf;
+    blfBufferCreate(&buf, fp);
+
+    size_t total = 0;
+    size_t counts[256] = {0};
+    VBLObjectHeaderBase base;
+    while (!blfBufferPeek(&buf, &base, sizeof(base))) {
+        if (blfBufferSkip(&buf, base.mObjectSize))
+            break;
+        //printf("Object id %d\n", base.mObjectType);
+        counts[base.mObjectType < 256 ? base.mObjectType : 0]++;
+        total++;
+    }
+
+    int i;
+    for (i = 0; i < 256; ++i) {
+        if (counts[i])
+            printf("%6d %zu\n", i, counts[i]);
+    }
+    printf("Total: %zu\n", total);
+    blfBufferDestroy(&buf);
+}
+
+
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -218,24 +257,9 @@ int main(int argc, char *argv[])
     char tmp[144];
     fread(tmp, 1, 144, fp);
 
-    struct BlfBuffer buf;
-    blfBufferCreate(&buf, fp);
-
-    size_t count = 0;
-    VBLObjectHeaderBase base;
-    while (1) {
-        if (blfBufferPeek(&buf, &base, sizeof(base)))
-            break;
-        if (blfBufferSkip(&buf, base.mObjectSize))
-            break;
-        count++;
-    }
-
-    printf("Done! Read %ld objects\n", count);
-    blfBufferPrint(&buf);
-
-    blfBufferDestroy(&buf);
+    summarizeBlf(fp);
 
     fclose(fp);
     return 0;
 }
+#endif // BLF_BUFFER_MAIN
