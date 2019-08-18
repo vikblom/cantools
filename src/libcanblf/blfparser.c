@@ -48,6 +48,26 @@ blfSystemTimeInit(SYSTEMTIME *const s)
     s->wMilliseconds = 0;
 }
 
+/* initialize VBLFileStatisticsEx structure */
+void
+blfStatisticsInit(VBLFileStatisticsEx *const s)
+{
+  s->mStatisticsSize = 0x88u;
+  s->mApplicationID = 0;
+  s->mApplicationMajor = 0;
+  s->mApplicationMinor = 0;
+  s->mApplicationBuild = 0;
+  s->mFileSize = 0;
+  s->mUncompressedFileSize = 0;
+  s->mObjectCount = 0;
+  s->mObjectsRead = 0;
+  blfSystemTimeInit(&s->mMeasurementStartTime);
+  blfSystemTimeInit(&s->mLastObjectTime);
+  assert(sizeof(s->mReserved) == 0x48);
+  blfMemZero((uint8_t *)(s->mReserved),
+            sizeof(s->mReserved));
+}
+
 /* initialize LOGG structure */
 void
 blfLOGGInit(LOGG l)

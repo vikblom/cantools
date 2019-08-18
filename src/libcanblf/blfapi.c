@@ -33,7 +33,7 @@ blfCreateFile(FILE *fp)
     blfAssertStructures();
 
     BLFHANDLE h = malloc(sizeof(*h));
-    if (h == NULL)
+    if (!h)
         goto fail;
 
     h->magic = BLHANDLE_MAGIC;
@@ -41,6 +41,7 @@ blfCreateFile(FILE *fp)
     h->mPeekFlag = 0;
 
     blfLOGGInit(&h->mLOGG);
+    blfStatisticsInit(&h->mStatistics);
     fread(&h->mLOGG, 1, 144, fp); // Overwrite with whats in the file.
     blfStatisticsFromLOGG(&h->mStatistics, &h->mLOGG);
 

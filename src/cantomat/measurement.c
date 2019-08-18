@@ -75,7 +75,7 @@ static void signalProc_print(
   signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
   char *outputSignalName =
     signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
-  
+
   fprintf(stderr,"   %s\t=%f ~ raw=%ld\t~ %d|%d@%d%c (%f,%f)"
           " [%f|%f] %d %ul \"%s\"\n",
           outputSignalName,
@@ -126,9 +126,9 @@ static void signalProc_timeSeries(
   signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
 
   /* assemble final signal name */
-  char *outputSignalName = 
+  char *outputSignalName =
     signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
-  
+
   /* look for signal in time series hash */
   timeSeries_t *timeSeries = hashtable_search(signalProcCbData->timeSeriesHash,
                                               (void *)outputSignalName);
@@ -183,7 +183,7 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
         /* found the message in the database */
         char *local_prefix;
         const char *const prefix = NULL;
-        
+
         /* setup and forward message prefix */
         if(messageProcCbData->signalFormat & signalFormat_Message) {
           local_prefix = signalFormat_stringAppend(prefix, dbcMessage->name);
@@ -259,7 +259,9 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
          * file stream
          */
         parserFunction(fp, canMessage_process, &messageProcCbData);
-
+        if(filename != NULL) {
+          fclose(fp);
+        }
       } else {
         fprintf(stderr, "measurement_read(): can't open input file\n");
         hashtable_destroy(measurement->timeSeriesHash, 0);

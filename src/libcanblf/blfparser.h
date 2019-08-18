@@ -40,6 +40,7 @@ extern "C" {
 #define BL_LOGG_SIGNATURE 0x47474F4C       /* 'LOGG' */
 
 void      blfMemZero(uint8_t *mem, const size_t n);
+void      blfStatisticsInit(VBLFileStatisticsEx *const s);
 void      blfLOGGInit(LOGG l);
 void      blfAssertEndian(void);
 void      blfAssertStructures(void);
