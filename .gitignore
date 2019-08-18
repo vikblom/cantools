@@ -19,3 +19,4 @@ stamp-h1
 *.stackdump
 *.trs
 *.TMP
+TAGS
