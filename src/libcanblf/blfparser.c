@@ -486,8 +486,8 @@ fail:
 
 /* copy VBLObjectHeaderBase */
 void
-blfVBLObjectHeaderBaseCopy(      VBLObjectHeaderBase *const dest,
-                                 const VBLObjectHeaderBase *const source)
+blfVBLObjectHeaderBaseCopy(VBLObjectHeaderBase *const dest,
+                           const VBLObjectHeaderBase *const source)
 {
     *dest = *source;
 }

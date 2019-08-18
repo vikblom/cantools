@@ -26,7 +26,6 @@
 # include <stdint.h>
 #endif
 
-#include "blfstream.h"
 #include "blfbuffer.h"
 
 #ifdef __cplusplus
@@ -138,11 +137,13 @@ typedef struct VBLFileStatisticsEx_t {
 typedef struct {
     uint32_t            magic;
     LOGG_t              mLOGG;
-    DualStream          mDualStream;
+    BlfBuffer           mBuffer;
     uint32_t            mPeekFlag;
     VBLFileStatisticsEx mStatistics;
     uint32_t            mCANMessageFormat_v1;
 } *BLFHANDLE;
+
+typedef int success_t;
 
 /* public functions */
 success_t blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase);

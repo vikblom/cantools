@@ -7,19 +7,19 @@
 extern "C" {
 #endif
 
-struct BlfBuffer {
+typedef struct {
     FILE *source;
     unsigned char *buffer;
     size_t capacity;
     size_t position;
     size_t size;
-};
+} BlfBuffer;
 
 
-int blfBufferCreate(struct BlfBuffer *buf, FILE *file);
-void blfBufferDestroy(struct BlfBuffer *buf);
-int blfBufferRead(struct BlfBuffer *buf, void *dest, size_t n);
-int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n);
+int blfBufferCreate(BlfBuffer *buf, FILE *file);
+void blfBufferDestroy(BlfBuffer *buf);
+int blfBufferRead(BlfBuffer *buf, void *dest, size_t n);
+int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n);
 
 
 #ifdef __cplusplus

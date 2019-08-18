@@ -5,7 +5,6 @@
 #include <zlib.h>
 
 #include "cantools_config.h"
-
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
@@ -49,7 +48,7 @@ static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
 }
 
 #if 0
-static void blfBufferDump(struct BlfBuffer *buf)
+static void blfBufferDump(BlfBuffer *buf)
 {
     printf("Position: %zu\t\tSize: %zu\t\tCapacity: %zu\n",
            buf->position, buf->size, buf->capacity);
@@ -58,7 +57,7 @@ static void blfBufferDump(struct BlfBuffer *buf)
 
 
 // Manipulates buffer so that n_incoming bytes can be appended.
-static int blfBufferRealloc(struct BlfBuffer *buf, size_t n_incoming)
+static int blfBufferRealloc(BlfBuffer *buf, size_t n_incoming)
 {
     size_t n_free = buf->capacity - (buf->position + buf->size);
     if (n_incoming <= n_free) {
@@ -89,7 +88,7 @@ static int blfBufferRealloc(struct BlfBuffer *buf, size_t n_incoming)
 
 // Unzip data into buffer
 // Fails if buffer is not big enough for inflated data.
-static size_t blfBufferUnzip(struct BlfBuffer *buf,
+static size_t blfBufferUnzip(BlfBuffer *buf,
                              unsigned char *zip_data, size_t zipd_size)
 {
     z_stream stream;
@@ -121,7 +120,7 @@ static size_t blfBufferUnzip(struct BlfBuffer *buf,
 
 
 // Unzip the next LOBJ into buffer
-static int blfBufferRefill(struct BlfBuffer *buf)
+static int blfBufferRefill(BlfBuffer *buf)
 {
     // Check whats coming
     size_t zipd_size, unzipd_size;
@@ -150,7 +149,7 @@ static int blfBufferRefill(struct BlfBuffer *buf)
 }
 
 
-int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n)
+int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n)
 {
     if (buf->size < n && blfBufferRefill(buf)) {
         fprintf(stderr, "Refill failed\n");
@@ -161,7 +160,7 @@ int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n)
     return 0;
 }
 
-int blfBufferSkip(struct BlfBuffer *buf, size_t n)
+int blfBufferSkip(BlfBuffer *buf, size_t n)
 {
     n += n % 4; // Include alignment padding
     if (buf->size < n && blfBufferRefill(buf)) {
@@ -174,7 +173,7 @@ int blfBufferSkip(struct BlfBuffer *buf, size_t n)
 }
 
 
-int blfBufferRead(struct BlfBuffer *buf, void *dest, size_t n)
+int blfBufferRead(BlfBuffer *buf, void *dest, size_t n)
 {
     if (blfBufferPeek(buf, dest, n)) {
         return 1;
@@ -184,7 +183,7 @@ int blfBufferRead(struct BlfBuffer *buf, void *dest, size_t n)
 }
 
 
-int blfBufferCreate(struct BlfBuffer *buf, FILE *file)
+int blfBufferCreate(BlfBuffer *buf, FILE *file)
 {
     if (!file) {
         fprintf(stderr, "Cannot buffer NULL\n");
@@ -205,7 +204,7 @@ int blfBufferCreate(struct BlfBuffer *buf, FILE *file)
 }
 
 
-void blfBufferDestroy(struct BlfBuffer *buf)
+void blfBufferDestroy(BlfBuffer *buf)
 {
     free(buf->buffer);
     return;
@@ -217,7 +216,7 @@ void blfBufferDestroy(struct BlfBuffer *buf)
 // Useful for sanity checking after changes.
 static void summarizeBlf(FILE *fp)
 {
-    struct BlfBuffer buf;
+    BlfBuffer buf;
     blfBufferCreate(&buf, fp);
 
     size_t total = 0;
