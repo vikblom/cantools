@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "blfapi.h"
-#inclide "blfparser.c"
+#include "blfparser.c"
 #include "blfbuffer.h"
 
 
@@ -31,22 +31,20 @@ blfCreateFile(FILE *fp)
     blfAssertEndian();
     blfAssertStructures();
 
-    BLFHANDLE handle = malloc(sizeof(*h));
+    BLFHANDLE h = malloc(sizeof(*h));
     if (h == NULL)
         goto fail;
 
+    h->magic = BLHANDLE_MAGIC;
+    h->mCANMessageFormat_v1 = 0;
+    h->mPeekFlag = 0;
+
+    blfLOGGInit(&h->mLOGG);
+    fread(&h->mLOGG, 1, 144, fp); // Overwrite with whats in the file.
+    blfStatisticsFromLOGG(&h->mStatistics, &h->mLOGG);
+
     // TODO: We should peek and check that this is the start.
-    fread(&handle->mLOGG, 1, 144, fp);
-    handle->magic = BLHANDLE_MAGIC;
-    handle->mCANMessageFormat_v1 = 0;
-    handle->mPeekFlag = 0;
-    blfStatisticsInit(&(handle->mStatistics));
-
-    blfBufferCreate(&handle->mBuffer, fp);
-
-    blfHandleInit(h);
-    if(!blfHandleOpen(h, fp))
-        goto fail;
+    blfBufferCreate(&h->mBuffer, fp);
     return h;
 
 fail:
@@ -61,7 +59,7 @@ blfCloseHandle(BLFHANDLE h)
 {
     if (!blfHandleIsInitialized(h))
         return 0;
-    blfBufferDestroy(&handle->mBuffer);
+    blfBufferDestroy(&h->mBuffer);
     free(h);
     return 1;
 }
@@ -91,7 +89,7 @@ blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
     if (!blfHandleIsInitialized(h) || pBase == NULL)
         return 0;
-    success_t success = !blfBufferSkip(h->buffer, pBase->mObjectSize);
+    success_t success = !blfBufferSkip(&h->mBuffer, pBase->mObjectSize);
     if (success) {
         h->mStatistics.mObjectsRead++;
     }
@@ -104,17 +102,17 @@ blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
     if (!blfHandleIsInitialized(h) || pBase == NULL)
         return 0;
-    return !blfBufferPeek(h->buffer, pBase, sizeof(*pBase));
+    return !blfBufferPeek(&h->mBuffer, pBase, sizeof(*pBase));
     // TODO: Sanity check the signature?
 }
 
 /* read next object */
 success_t
-blfReadObject(BLFHANDLE hFile, VBLObjectHeaderBase *pBase)
+blfReadObject(BLFHANDLE h, VBLObjectHeaderBase *pBase)
 {
-    success_t success = !blfBufferRead(h->buffer, pBase, pBase->mObjectSize);
+    success_t success = !blfBufferRead(&h->mBuffer, pBase, pBase->mObjectSize);
     if(success) {
-        hFile->mStatistics.mObjectsRead++;
+        h->mStatistics.mObjectsRead++;
     }
     return success;
 }

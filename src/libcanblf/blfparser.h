@@ -41,17 +41,12 @@ extern "C" {
 #define BL_LOGG_SIGNATURE 0x47474F4C       /* 'LOGG' */
 
 void      blfMemZero(uint8_t *mem, const size_t n);
+void      blfLOGGInit(LOGG l);
+void      blfAssertEndian(void);
+void      blfAssertStructures(void);
 success_t blfHandleIsInitialized(BLFHANDLE h);
-success_t blfPeekObjectInternal(BLFHANDLE hFile, VBLObjectHeaderBase *pBase);
-BLFHANDLE blfHandleInit(BLFHANDLE this);
-success_t blfHandleOpen(BLFHANDLE h, FILE *fp);
-success_t blfHandleRead(BLFHANDLE h, uint8_t fileOnlyBit, uint8_t *dest_ptr,
-                        uint32_t nBytes);
-success_t blfFreeHeader(BLFHANDLE hFile, VBLObjectHeader *pBase);
-success_t blfHandleSkip(BLFHANDLE h, uint32_t nBytes);
 void      blfVBLObjectHeaderBaseCopy (VBLObjectHeaderBase *const dest,
                                       const VBLObjectHeaderBase *const source);
-success_t blfHandleClose(BLFHANDLE h);
 
 #ifdef __cplusplus
 }
