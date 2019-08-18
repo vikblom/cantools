@@ -123,7 +123,6 @@ include_HEADERS= src/libcandbc/dbcmodel.h \
 		 src/libcanasc/ascreader.h \
 		 src/libcanblf/blfreader.h \
 		 src/libcanblf/blfapi.h \
-		 src/libcanblf/blfstream.h \
 		 src/libcanblf/blfparser.h \
 		 src/libcanblf/blfbuffer.h \
 		 src/libcanvsb/vsbreader.h \
@@ -148,7 +147,6 @@ libcanasc_la_SOURCES= src/libcanasc/ascreader.c
 libcanblf_la_SOURCES= src/libcanblf/blfreader.c \
 		              src/libcanblf/blfbuffer.c \
 		              src/libcanblf/blfparser.c \
-				      src/libcanblf/blfstream.c \
 		     		  src/libcanblf/blfapi.c
 
 libcanvsb_la_SOURCES= src/libcanvsb/vsbreader.c

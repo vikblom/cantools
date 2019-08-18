@@ -28,7 +28,6 @@
 
 #include <stdio.h>
 
-#include "blfstream.h"
 #include "blfapi.h"
 
 #ifdef __cplusplus
