@@ -153,12 +153,11 @@ int blfBufferPeek(struct BlfBuffer *buf, void *dest, size_t n)
 
 int blfBufferSkip(struct BlfBuffer *buf, size_t n)
 {
+    n += n % 4; // Include alignment padding
     if (buf->size < n && blfBufferRefill(buf)) {
         fprintf(stderr, "Refill failed\n");
         return 1;
     }
-
-    n += n % 4; // Align
     buf->position += n;
     buf->size -= n;
     return 0;
@@ -215,36 +214,27 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Cannot open file: %s\n", argv[1]);
         return 1;
     }
-
     // Skip the header
     char tmp[144];
     fread(tmp, 1, 144, fp);
-    tmp[5] = '\0';
-    printf("%s\n", tmp);
-
 
     struct BlfBuffer buf;
     blfBufferCreate(&buf, fp);
 
-    blfBufferRefill(&buf);
-
     size_t count = 0;
     VBLObjectHeaderBase base;
-    do {
+    while (1) {
         if (blfBufferPeek(&buf, &base, sizeof(base)))
             break;
         if (blfBufferSkip(&buf, base.mObjectSize))
             break;
         count++;
-    } while (1);
+    }
 
     printf("Done! Read %ld objects\n", count);
     blfBufferPrint(&buf);
 
-
     blfBufferDestroy(&buf);
-
-
 
     fclose(fp);
     return 0;
