@@ -1,4 +1,4 @@
-/*  dbcls -- list contents of a DBC file 
+/*  dbcls -- list contents of a DBC file
     Copyright (C) 2007-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,6 @@
  * dbcls -d dbcfile -m  > messages.txt
  * dbcls -d dbcfile -s  > signals.txt
  */
-
-#include "cantools_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -205,7 +203,7 @@ static void show_signal(signal_list_t *sl)
          "%f;"       /* min */
          "%f;"      /* max */
          "%s;"      /* signal val type */
-         "\"%s\";"   /* unit */             
+         "\"%s\";"   /* unit */
          ,
          /* Signal */
          sl->signal->name,
