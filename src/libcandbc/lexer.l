@@ -16,8 +16,6 @@
 
 %{
 
-#include "cantools_config.h"
-
 #include <stdio.h>
 #include <string.h>
 #include "dbcmodel.h"
