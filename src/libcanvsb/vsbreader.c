@@ -14,18 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <ctype.h>
 
 #include "vsbreader.h"
@@ -65,7 +58,7 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
             header.file_version);
   }
   printf("file version %x\n",header.file_version);
-  
+
   /* loop for reading input lines */
   while(1) {
     canMessage_t message;
@@ -77,7 +70,7 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     if(ret != 1) {
       break;
     }
-    
+
     if(msg.NumberBytesData > 8) {
       fprintf(stderr, "error: DLC > 8\n");
       goto read_error;
@@ -91,12 +84,12 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     const float NEOVI_TIMEHARDWARE_SCALING  = 1.6e-6;
 
     dTime = NEOVI_TIMEHARDWARE2_SCALING * msg.TimeHardware2
-          + NEOVI_TIMEHARDWARE_SCALING  * msg.TimeHardware, 
+          + NEOVI_TIMEHARDWARE_SCALING  * msg.TimeHardware,
     message.t.tv_sec  = dTime;
     message.t.tv_nsec = (dTime-message.t.tv_sec)*1e9;
     message.bus = msg.NetworkID;
     message.dlc = msg.NumberBytesData;
-    
+
     /* get message bytes */
     for(i = 0; i < message.dlc; i++) {
       message.byte_arr[i] = msg.Data[i];
@@ -112,7 +105,7 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
   /* dump busmap */
   {
     uint8_t i;
-    
+
     fputs("bus allocation: ",stdout);
     do {
       if(busmap[i]) printf("%d  ",i);

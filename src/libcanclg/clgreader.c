@@ -14,18 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <ctype.h>
 #include "clgreader.h"
 
@@ -89,7 +82,7 @@ void clgReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     if(ret != 1) {
       break;
     }
-    
+
     id_channel =  (msg.id_channel_array[3] << 24)
           | (msg.id_channel_array[2] << 16)
           | (msg.id_channel_array[1] << 8)
@@ -114,7 +107,7 @@ void clgReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     message.t.tv_nsec = (dTime-message.t.tv_sec)*1e9;
     message.bus = channel;
     message.dlc = 8;
-    
+
     /* get message bytes */
     for(i = 0; i < message.dlc; i++) {
       message.byte_arr[i] = msg.data_array[i];

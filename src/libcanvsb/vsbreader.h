@@ -17,16 +17,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 #include "dbctypes.h"
 #include "measurement.h"
@@ -47,7 +40,7 @@ typedef struct {
 typedef struct {
   /*
    * see www.intrepidcs.com/support/ICSDocumentation/neoAPILinux/StatusBitfields.htm
-   */ 
+   */
   uint32_t StatusBitField;
   uint32_t StatusBitField2;
   uint32_t TimeHardware;
@@ -58,15 +51,15 @@ typedef struct {
   uint8_t  TimeStampSystemID;
   uint8_t  NetworkID;
   uint8_t  NodeID;
-  uint8_t  Protocol; 
+  uint8_t  Protocol;
   uint8_t  MessagePieceID;
   uint8_t  ExtraDataPtrEnabled;
   uint8_t  NumberBytesHeader;
   uint8_t  NumberBytesData;
   int16_t  DescriptionID;
   int32_t  ArbIDOrHeader;
-  uint8_t  Data[8]; 
-  uint8_t  AckBytes[8]; 
+  uint8_t  Data[8];
+  uint8_t  AckBytes[8];
   float    ExtraDataPtr;
   uint8_t  MiscData;
 } icsSpyMessage_t;
