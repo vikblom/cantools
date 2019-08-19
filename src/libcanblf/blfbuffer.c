@@ -33,6 +33,7 @@ static void assertLobjNext(FILE *fp)
 }
 
 
+// Moves source past a log container header.
 static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
 {
     VBLObjectHeaderBaseLOGG log;
@@ -47,16 +48,8 @@ static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
     return 1;
 }
 
-#if 0
-static void blfBufferDump(BlfBuffer *buf)
-{
-    printf("Position: %zu\t\tSize: %zu\t\tCapacity: %zu\n",
-           buf->position, buf->size, buf->capacity);
-}
-#endif
 
-
-// Manipulates buffer so that n_incoming bytes can be appended.
+// Increase buffer capacity to fit at least current size + n_incoming
 static int blfBufferRealloc(BlfBuffer *buf, size_t n_incoming)
 {
     size_t n_free = buf->capacity - (buf->position + buf->size);
@@ -86,8 +79,8 @@ static int blfBufferRealloc(BlfBuffer *buf, size_t n_incoming)
 }
 
 
-// Unzip data into buffer
-// Fails if buffer is not big enough for inflated data.
+// Unzip data into buffer, increases buffer size.
+// The buffer must have capacity for all the new data.
 static size_t blfBufferUnzip(BlfBuffer *buf,
                              unsigned char *zip_data, size_t zipd_size)
 {
@@ -119,7 +112,7 @@ static size_t blfBufferUnzip(BlfBuffer *buf,
 }
 
 
-// Unzip the next LOBJ into buffer
+// Adds more data to buffer from source file, increasing size and maybe capacity.
 static int blfBufferRefill(BlfBuffer *buf)
 {
     // Check whats coming
@@ -151,11 +144,12 @@ static int blfBufferRefill(BlfBuffer *buf)
 
 int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n)
 {
-    if (buf->size < n && blfBufferRefill(buf)) {
-        fprintf(stderr, "Refill failed\n");
-        return 1;
+    while (buf->size < n) {
+        if (blfBufferRefill(buf)) {
+            fprintf(stderr, "Refill failed\n");
+            return 1;
+        }
     }
-
     memcpy(dest, buf->buffer + buf->position, n);
     return 0;
 }
@@ -163,9 +157,11 @@ int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n)
 int blfBufferSkip(BlfBuffer *buf, size_t n)
 {
     n += n % 4; // Include alignment padding
-    if (buf->size < n && blfBufferRefill(buf)) {
-        fprintf(stderr, "Refill failed\n");
-        return 1;
+    while (buf->size < n) {
+        if (blfBufferRefill(buf)) {
+            fprintf(stderr, "Refill failed\n");
+            return 1;
+        }
     }
     buf->position += n;
     buf->size -= n;
@@ -212,6 +208,14 @@ void blfBufferDestroy(BlfBuffer *buf)
 
 
 #ifdef BLF_BUFFER_MAIN
+// For debug purposes
+static void blfBufferDump(BlfBuffer *buf)
+{
+    printf("Position: %zu\t\tSize: %zu\t\tCapacity: %zu\n",
+           buf->position, buf->size, buf->capacity);
+}
+
+
 // Lists how many objects of each kind (id < 256) there are in the file.
 // Useful for sanity checking after changes.
 static void summarizeBlf(FILE *fp)
