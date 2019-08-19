@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
 #include <stdio.h>
 #include "dbcreader.h"
 #include "dbcwriter.h"
@@ -44,7 +42,7 @@ main(int argc, char **argv)
     /* perform copy */
     if(dbcout != NULL) {
       dbc_write(dbcout, dbc);
-      
+
       /* close output file */
       if(outFilename != NULL) {
         fclose(dbcout);

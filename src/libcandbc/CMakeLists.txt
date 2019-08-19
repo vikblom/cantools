@@ -10,4 +10,5 @@ ADD_FLEX_BISON_DEPENDENCY(DbcLexer DbcParser)
 
 add_library(candbc dbcmodel.c dbcreader.c dbcwriter.c
   ${BISON_DbcParser_OUTPUTS} ${FLEX_DbcLexer_OUTPUTS})
-target_include_directories(candbc PRIVATE .)
+target_link_libraries(candbc -lm)
+target_include_directories(candbc PRIVATE . PUBLIC .) # TODO: Limit public
