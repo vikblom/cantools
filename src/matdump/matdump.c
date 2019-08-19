@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,7 +22,11 @@
 #include <matio.h>
 #include <getopt.h>
 
-#include "matdump.h"
+/* callback data for MATLAB output */
+typedef struct {
+  mat_t *mat;
+  enum matio_compression compress;
+} mdftomat_t;
 
 static int mode = 0; /* short dump */
 static int verbose_level = 0;
@@ -204,7 +206,7 @@ static void
 mat_dump(mat_t *mat, int nvar, char **varnames)
 {
   matvar_t *matvar;
- 
+
   if(nvar == 0) { /* no var names given -> dump everything */
     while ( NULL != (matvar = Mat_VarReadNext(mat)) ) {
       var_dump(matvar);
@@ -212,7 +214,7 @@ mat_dump(mat_t *mat, int nvar, char **varnames)
     }
   } else {
     int ivar;
-    
+
     for(ivar = 0; ivar < nvar; ivar++) {
       matvar = Mat_VarRead(mat, varnames[ivar]);
       var_dump(matvar);
@@ -253,7 +255,7 @@ main(int argc, char **argv)
   while (1) {
     static struct option long_options[] = {
       /* These options set a flag. */
-      
+
       /* These options don't set a flag.
          We distinguish them by their indices. */
       {"verbose", no_argument,       &verbose_level,  1},
@@ -321,7 +323,7 @@ main(int argc, char **argv)
   } else {
     fprintf(stderr,"Error opening MAT file %s",mat_filename);
   }
-  
+
   /* close mat file */
   if(NULL != mat) {
     Mat_Close(mat);
