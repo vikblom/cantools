@@ -1,16 +1,8 @@
-#include <stddef.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <assert.h>
 #include <zlib.h>
-
-#include "cantools_config.h"
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #include "blfbuffer.h"
 #include "blfapi.h"
