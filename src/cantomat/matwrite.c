@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
 #include <stdlib.h>
 
 #if WITH_DMALLOC
@@ -86,4 +84,3 @@ int matWrite(measurement_t *measurement, const char *outFileName)
 
   return err;
 }
-

@@ -3,6 +3,5 @@
 int
 main()
 {
-	fclose(stdin);
-	return 0;
+	return 2;
 }

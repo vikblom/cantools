@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -209,13 +207,13 @@ main(int argc, char **argv)
     busAssignment_free(busAssignment);
     usage_error();
   }
-  
+
   /* parse DBC files */
   if(busAssignment_parseDBC(busAssignment)) {
     fprintf(stderr, "error: parsing DBC file failed\n");
     exit(1);
   }
-  
+
   /* parse input file */
   if(verbose_flag) {
     if(inputFilename != NULL) {
@@ -242,7 +240,7 @@ main(int argc, char **argv)
   }
   ret = 0;
 
-usage_error:  
+usage_error:
   busAssignment_free(busAssignment);
   return ret;
 }

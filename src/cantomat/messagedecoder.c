@@ -14,8 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "cantools_config.h"
-
 #include "dbcmodel.h"
 #include "messagedecoder.h"
 
@@ -93,7 +91,7 @@ void canMessage_decode(message_t      *dbcMessage,
     uint8  shift;
 
     /* align signal into ulong32 */
-    /* 0 = Big Endian, 1 = Little Endian */    
+    /* 0 = Big Endian, 1 = Little Endian */
     if(s->endianess == 0) { /* big endian */
       uint8  end_byte     = start_byte + (7 + bit_len - start_offset - 1)/8;
       uint8  end_offset   = (start_offset - bit_len + 1) & 7;
