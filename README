@@ -1,7 +1,11 @@
 Issues
 ===================
 * mdftomat includes sys/mman.h which does not exist in Windows.
-* build fails with pacman libmatio.
+* Linking against libmatio from msys2 repositories does not work.
+  Executable fails with error msg:
+  "The procedure entry point H5Rdereference coult not be
+  located in the dynamic library
+  C:\msys64\mingw64\bin\libmatio-9.dll"
 
 General Information
 ===================
@@ -20,9 +24,10 @@ formats:
 * dbccopy copies a DBC file
 
 
-Compilation of cantools in MSYS2
+Compiling native Windows exe with MSYS2
 ====================
 General deps
+- Install Msys2
 - Open Msys2 terminal
 - Update
       pacman -Syu
@@ -40,13 +45,13 @@ Build only deps
       ./configure
       make && make install
 
-Build cantools
+Build cantomat
 - Open Msys2 64-bit terminal
 - Navigate to cantools folder and run:
       libtoolize
       autoreconf -f -i
       ./configure
-      make
+      make cantomat.exe
 
  Compilation of cantools in Windows Subsystem for Linux (WSL)
 ====================
