@@ -16,134 +16,42 @@ formats:
 * file (MATLAB format)
 * mdftomat converts log files in MDF format to a MAT file (up to MDF
   version 3.x)
-
-Some tools are available for testing of converters:
-
 * matdump displays the content of a MAT file as ASCII text
 * dbccopy copies a DBC file
 
-The tools 'asctomat' and 'mdftomat' require the package matio,
-which in turn requires the package hdf5. Support for these
-tools is optional; either disable them with '--disable-matlab'
-configure option or make sure hdf5 and matio dependencies are
-installed first (see instructions below).
 
-Since hdf5 is intended only for native builds,
-it is recommended to disable the optional tools on cross-compile
-builds of cantools in order to avoid this dependency
-https://support.hdfgroup.org/HDF5/faq/compile.html#cross
+Compilation of cantools in MSYS2
+====================
+General deps
+- Open Msys2 terminal
+- Update
+      pacman -Syu
+- Install everything you could need
+      pacman -Syu --needed base-devel mingw-w64-x86_64-{toolchain,libtool,check,hdf5} zlib-devel wget
 
-Shared libraries for parsing and accessing these files are also
-provided:
+Build only deps
+- Open Msys2 64-bit terminal
+- Grab specific matio version
+      wget 'http://downloads.sourceforge.net/matio/matio-1.5.10.tar.gz?use_mirror=' -O matio-1.5.10.tar.gz
+- Unpack:
+      tar xzf matio-1.5.10.tar.gz
+- Build and install matio:
+      cd matio-1.5.10
+      ./configure
+      make && make install
 
-* libcandbc, libcanasc, libcanblf, libcanclg, libcanvsb, libcanmdf for
-  parsing of DBC, ASC, BLF, CLG, VSB, MDF files
+Build cantools
+- Open Msys2 64-bit terminal
+- Navigate to cantools folder and run:
+      libtoolize
+      autoreconf -f -i
+      ./configure
+      make
 
-
-Installation of hdf5
-=====================
-Prerequisites: zlib-devel, bison, flex, make, gcc
-
-matio can be built with libhdf5, here is how to:
-
-1) download:
-   wget 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.16.tar.bz2'
-2) unpack:
-   tar xjf hdf5-1.8.16.tar.bz2
-3) build:
-   cd hdf5-1.8.16
-   ./configure --with-zlib=/usr/include,/lib --prefix=/usr
-   CFLAGS=-std=c99 make
-   CFLAGS=-std=c99 make check
-
-4) install:
-   make install
-
-
-Installation of matio
-=====================
-Prerequisites: autotools, zlib-devel, make, gcc
-
-1) download matio-1.5.10.tar.gz:
-   wget 'http://downloads.sourceforge.net/matio/matio-1.5.10.tar.gz?use_mirror=' -O matio-1.5.10.tar.gz
-   or
-   curl -o matio-1.5.10.tar.gz -L 'http://downloads.sourceforge.net/matio/matio-1.5.10.tar.gz?use_mirror='
-2) unpack:
-   tar xzf matio-1.5.10.tar.gz
-3) configure:
-   cd matio-1.5.10
-   CFLAGS=-DZ_PREFIX ./configure --with-zlib=/ --with-hdf5=/ --prefix=/usr
-4) build and install:
-   make ; make install
-
-Installation of cantools
-========================
-Prerequisites: autotools, matio, bison, flex, make, gcc
-
-download and extract cantools-*.tar.gz
-cd cantools
-libtoolize
-autoreconf -f -i
-./configure
-make
-make install
-
-Compilation of cantools on Windows Subsystem for Linux (WSL)
+ Compilation of cantools in Windows Subsystem for Linux (WSL)
 ====================
 sudo apt-get install gcc libz-dev libmatio-dev pkg-config flex bison check libglib2.0 subversion automake
 git clone https://github.com/aheit/cantools cantools-code
 cd cantools-code
 ./configure
 make
-
-Execute Unit Test(s)
-====================
-     - run 'make check'
-     - all tests should PASS
-
-Debugging DBC parser
-====================
-Edit Makefile:
-     - uncomment the line DEFS=$(YYDEBUG)
-     - add "extern int yydebug; yydebug = 1;" to the main program
-     - recompile
-
-Profiling
-=========
-Edit Makefile:
-     - add flag "-pg" to CFLAGS
-
-Troubleshooting
-===============
-1) Error: ./libtool: line 860: X--tag=CC: command not found
-   Reason: libtool scripts from a different environment are used
-   Fix: execute "autoreconf -f -i; make"
-
-2) Error: matio.h: No such file or directory
-   Reason: matio is not installed
-   Fix: install matio  (see "Installation of matio")
-
-3) Error: configure stops with "Error! You need to install libmatio first."
-   Reason: linker did not find matio in the library path
-   Fix: install matio to /usr instead of /usr/local. Set PREFIX to
-   /usr at configuration time (see "Installation of matio")
-
-4) Error while compiling matio-1.5:
-     libtool: compile:  gcc -DHAVE_CONFIG_H -I. -I. -DZ_PREFIX -c mat.c  -DDLL_EXPORT -DPIC -o .libs/mat.o
-     mat.c: In function `Mat_VarReadInfo':
-     mat.c:1710: warning: dereferencing `void *' pointer
-     mat.c:1710: error: request for member `_flags' in something not a structure or union
-     mat.c: In function `Mat_VarReadNext':
-     mat.c:1762: warning: dereferencing `void *' pointer
-     mat.c:1762: error: request for member `_flags' in something not a structure or union
-   Reason: incorrect definition in _mat_t
-   Fix: in file matio_private.h, replace line
-    void *fp;               /**< File pointer for the MAT file */
-   by
-    FILE *fp;               /**< File pointer for the MAT file */
-
-5) Error message from make: "configure.ac:36: error: required file
-   './compile' not found" (or similar)
-   Reason: platform specific automake scripts are not provided by the
-   source distribution.
-   Fix: run 'autoreconf -f -i'
