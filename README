@@ -48,10 +48,8 @@ Build only deps
 Build cantomat
 - Open Msys2 64-bit terminal
 - Navigate to cantools folder and run:
-      libtoolize
-      autoreconf -f -i
-      ./configure
-      make cantomat.exe
+      cmake -G"MSYS Makefiles" -B build .
+      make -C build
 
  Compilation of cantools in Windows Subsystem for Linux (WSL)
 ====================

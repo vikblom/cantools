@@ -20,3 +20,7 @@ stamp-h1
 *.trs
 *.TMP
 TAGS
+
+# Artifact directories
+build
+logs
