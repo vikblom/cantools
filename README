@@ -32,7 +32,7 @@ General deps
 - Update
       pacman -Syu
 - Install everything you could need
-      pacman -Syu --needed base-devel mingw-w64-x86_64-{toolchain,libtool,check,hdf5} zlib-devel wget
+      pacman -Syu --needed base-devel make mingw-w64-x86_64-{toolchain,gcc,libtool,check,hdf5} zlib-devel wget
 
 Build only deps
 - Open Msys2 64-bit terminal
