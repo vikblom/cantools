@@ -40,8 +40,11 @@ char *signalFormat_stringAppend(const char *in, const char *app)
     char *dp;
     char *sp;
 
-    ret = malloc(strlen(in) + 1 + strlen(app) + 1);
+    // FIXME: This is probably leaked!
+    ret = malloc(strlen(in) + 3 + strlen(app) + 1);
     dp = strapp(ret, in);
+    *dp++ = '_';
+    *dp++ = '_';
     *dp++ = '_';
     dp = strapp(dp, app);
     *dp = '\0';
