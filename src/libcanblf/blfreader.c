@@ -132,6 +132,7 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     while(success && blfPeekObject(h, &base)) {
         switch(base.mObjectType) {
         case BL_OBJ_TYPE_CAN_MESSAGE:
+        case BL_OBJ_TYPE_CAN_MESSAGE2:
             message.mHeader.mBase = base;
             success = blfReadObjectSecure(h, &message.mHeader.mBase,
                                           sizeof(message));

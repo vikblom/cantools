@@ -191,7 +191,7 @@ main(int argc, char **argv)
 #ifdef YYDEBUG
   if(debug_flag) {
     extern int yydebug;
-    yydebug=1;
+    yydebug=0; // Skip Bison debug, it is very noisy.
   }
 #endif
 

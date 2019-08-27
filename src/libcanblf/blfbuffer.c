@@ -110,7 +110,7 @@ static int blfBufferRefill(BlfBuffer *buf)
     // Check whats coming
     size_t zipd_size, unzipd_size;
     if (!skipToPayload(buf->source, &zipd_size, &unzipd_size)) {
-        fprintf(stderr, "Next item is not a container. Cannot add more data.\n");
+        //fprintf(stderr, "Next item is not a container. Cannot add more data.\n");
         return 1;
     }
 
@@ -138,7 +138,7 @@ int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n)
 {
     while (buf->size < n) {
         if (blfBufferRefill(buf)) {
-            fprintf(stderr, "Refill failed\n");
+            //fprintf(stderr, "Refill failed\n");
             return 1;
         }
     }
