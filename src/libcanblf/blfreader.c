@@ -73,7 +73,7 @@ blfCANMessageFromVBLCANMessage(canMessage_t* canMessage,
     } else {
         // Make sure no scrap bytes are interfering and
         // shift to what is in the dbc.
-        canMessage->id = (message->mID + 0x80000000) & ((1 << 29) - 1);
+        canMessage->id = message->mID & ((1 << 29) - 1) | (1 << 31);
     }
 }
 
