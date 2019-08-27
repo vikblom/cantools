@@ -60,14 +60,21 @@ blfCANMessageDump(const canMessage_t* canMessage)
 }
 
 static void
-blfCANMessageFromVBLCANMessage (canMessage_t* canMessage,
-                                const VBLCANMessage* message)
+blfCANMessageFromVBLCANMessage(canMessage_t* canMessage,
+                               const VBLCANMessage* message)
 {
     /* copy data */
     canMessage->bus = message->mChannel;
     canMessage->dlc = message->mDLC;
     memcpy(canMessage->byte_arr, message->mData, canMessage->dlc);
-    canMessage->id = (uint32)message->mID;
+    if (message->mHeader.mBase.mObjectType == BL_OBJ_TYPE_CAN_MESSAGE) {
+        // Make sure no scrap bytes are interfering.
+        canMessage->id = message->mID & ((1 << 11) - 1);
+    } else {
+        // Make sure no scrap bytes are interfering and
+        // shift to what is in the dbc.
+        canMessage->id = (message->mID + 0x80000000) & ((1 << 29) - 1);
+    }
 }
 
 static void
@@ -145,7 +152,8 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
 
                 /* translate VBLCANMessage to message structure */
                 blfCANMessageFromVBLCANMessage(&canMessage, &message);
-                blfVBLCANMessageParseTime(&message, &canMessage.t.tv_sec,
+                blfVBLCANMessageParseTime(&message,
+                                          &canMessage.t.tv_sec,
                                           &canMessage.t.tv_nsec);
 
                 if(debug_flag) {
