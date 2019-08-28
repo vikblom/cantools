@@ -78,7 +78,7 @@ main(int argc, char **argv)
   signalFormat_t signalFormat = signalFormat_Name;
   measurement_t *measurement;
   int ret = 1;
-  sint32 timeResolution = 10000;
+  sint32 timeResolution = 1;
   parserFunction_t parserFunction = NULL;
 
   program_name = argv[0];
