@@ -1,11 +1,20 @@
 Issues
 ===================
-* mdftomat includes sys/mman.h which does not exist in Windows.
+* Cmake compilation is using an ugly hack to let everyone reach everything.
 * Linking against libmatio from msys2 repositories does not work.
   Executable fails with error msg:
   "The procedure entry point H5Rdereference coult not be
   located in the dynamic library
   C:\msys64\mingw64\bin\libmatio-9.dll"
+* Extended CAN msgs with dlc > 8 are not even read from blf file!
+  Most likely they have ID BL_OBJ_TYPE_reserved_5=115
+  which we have no way of parsing?
+
+Notes
+===================
+* mdftomat compilation disabled since it
+  includes sys/mman.h which does not exist on Windows.
+
 
 General Information
 ===================

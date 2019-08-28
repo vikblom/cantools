@@ -22,71 +22,71 @@ extern int verbose_flag;
 
 busAssignment_t *busAssignment_create(void)
 {
-  CREATE(busAssignment_t, busAssignment);
+    CREATE(busAssignment_t, busAssignment);
 
-  busAssignment->n = 0;
-  busAssignment->list = NULL;
-  return busAssignment;
+    busAssignment->n = 0;
+    busAssignment->list = NULL;
+    return busAssignment;
 }
 
 void busAssignment_associate(busAssignment_t *busAssignment,
                              int bus, char *filename)
 {
-  busAssignment->n++;
-  busAssignment->list = (busAssignmentEntry_t *)
-    realloc(busAssignment->list,
-            busAssignment->n
-            * sizeof(*(busAssignment->list)));
-  busAssignment->list[busAssignment->n-1].bus = bus;
-  busAssignment->list[busAssignment->n-1].filename = strdup(filename);
-  busAssignment->list[busAssignment->n-1].messageHash = NULL;
+    busAssignment->n++;
+    busAssignment->list = (busAssignmentEntry_t *)
+        realloc(busAssignment->list,
+                busAssignment->n
+                * sizeof(*(busAssignment->list)));
+    busAssignment->list[busAssignment->n-1].bus = bus;
+    busAssignment->list[busAssignment->n-1].filename = strdup(filename);
+    busAssignment->list[busAssignment->n-1].messageHash = NULL;
 }
 
 int busAssignment_parseDBC(busAssignment_t *busAssignment)
 {
-  int i;
-  int ret = 0;
+    int i;
+    int ret = 0;
 
-  for(i = 0; i < busAssignment->n; i++) {
-    dbc_t *dbc;
+    for(i = 0; i < busAssignment->n; i++) {
+        dbc_t *dbc;
 
-    if(verbose_flag) {
-      fprintf(stderr, "Parsing DBC file %s\n", busAssignment->list[i].filename);
+        if(verbose_flag) {
+            fprintf(stderr, "Parsing DBC file %s\n", busAssignment->list[i].filename);
+        }
+        if(NULL != (dbc = dbc_read_file(busAssignment->list[i].filename))) {
+            messageHash_t *messageHash = messageHash_create(dbc->message_list);
+
+            // busAssignment->list[i].databaseName = NULL;
+            busAssignment->list[i].messageHash = messageHash;
+            if(messageHash == NULL) {
+                fprintf(stderr,
+                        "busAssignment_parseDBC(): error parsing DBC file %s\n",
+                        busAssignment->list[i].filename);
+                ret = 1;
+                break;
+            }
+            dbc_free(dbc);
+        } else {
+            fprintf(stderr, "busAssignment_parseDBC(): error opening DBC file %s\n",
+                    busAssignment->list[i].filename);
+            ret = 1;
+            break;
+        }
     }
-    if(NULL != (dbc = dbc_read_file(busAssignment->list[i].filename))) {
-      messageHash_t *messageHash = messageHash_create(dbc->message_list);
-
-      // busAssignment->list[i].databaseName = NULL;
-      busAssignment->list[i].messageHash = messageHash;
-      if(messageHash == NULL) {
-        fprintf(stderr,
-                "busAssignment_parseDBC(): error parsing DBC file %s\n",
-                busAssignment->list[i].filename);
-        ret = 1;
-        break;
-      }
-      dbc_free(dbc);
-    } else {
-      fprintf(stderr, "busAssignment_parseDBC(): error opening DBC file %s\n",
-              busAssignment->list[i].filename);
-      ret = 1;
-      break;
-    }
-  }
-  return ret;
+    return ret;
 }
 
 void busAssignment_free(busAssignment_t *busAssignment)
 {
-  int i;
+    int i;
 
-  if(busAssignment != NULL) {
-    for(i = 0; i < busAssignment->n; i++) {
-      busAssignmentEntry_t *entry = &(busAssignment->list[i]);
-      free(entry->filename);
-      messageHash_free(entry->messageHash);
+    if(busAssignment != NULL) {
+        for(i = 0; i < busAssignment->n; i++) {
+            busAssignmentEntry_t *entry = &(busAssignment->list[i]);
+            free(entry->filename);
+            messageHash_free(entry->messageHash);
+        }
+        if(busAssignment->list != NULL) free(busAssignment->list);
     }
-    if(busAssignment->list != NULL) free(busAssignment->list);
-  }
-  free(busAssignment);
+    free(busAssignment);
 }

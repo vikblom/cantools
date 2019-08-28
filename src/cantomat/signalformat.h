@@ -18,9 +18,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 typedef enum {
-  signalFormat_Name     = 1<<1,
-  signalFormat_Message  = 1<<2,
-  signalFormat_Database = 1<<3,
+    signalFormat_Name     = 1<<1,
+    signalFormat_Message  = 1<<2,
+    signalFormat_Database = 1<<3,
 } signalFormat_t;
 
 char *signalFormat_stringAppend(const char *in, const char *app);

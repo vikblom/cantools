@@ -24,28 +24,28 @@
    next destination character */
 static char *strapp(char *dp, const char *sp)
 {
-  while(*sp != '\0') {
-    *dp++ = *sp++;
-  }
-  return dp;
+    while(*sp != '\0') {
+        *dp++ = *sp++;
+    }
+    return dp;
 }
 
 char *signalFormat_stringAppend(const char *in, const char *app)
 {
-  char *ret;
+    char *ret;
 
-  if(in == NULL) {
-    ret = strdup(app);
-  } else {
-    char *dp;
-    char *sp;
+    if(in == NULL) {
+        ret = strdup(app);
+    } else {
+        char *dp;
+        char *sp;
 
-    // FIXME: This is probably leaked!
-    ret = malloc(strlen(in) + 2 + strlen(app) + 1);
-    dp = strapp(ret, in);
-    dp = strapp(dp, "__");
-    dp = strapp(dp, app);
-    *dp = '\0';
-  }
-  return ret;
+        // FIXME: This is probably leaked!
+        ret = malloc(strlen(in) + 2 + strlen(app) + 1);
+        dp = strapp(ret, in);
+        dp = strapp(dp, "__");
+        dp = strapp(dp, app);
+        *dp = '\0';
+    }
+    return ret;
 }

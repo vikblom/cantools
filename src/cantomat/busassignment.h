@@ -20,14 +20,14 @@
 #include "messagehash.h"
 
 typedef struct {
-  int bus;
-  char *filename;
-  messageHash_t *messageHash;
+    int bus;
+    char *filename;
+    messageHash_t *messageHash;
 } busAssignmentEntry_t;
 
 typedef struct {
-  int n;
-  busAssignmentEntry_t *list; /* array of n busAssigmentEntry_t's */
+    int n;
+    busAssignmentEntry_t *list; /* array of n busAssigmentEntry_t's */
 } busAssignment_t;
 
 busAssignment_t *busAssignment_create(void);
