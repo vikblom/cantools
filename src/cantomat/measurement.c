@@ -30,69 +30,69 @@
 
 /* callback structure for timeSeries signal handler */
 typedef struct {
-  struct hashtable *timeSeriesHash;
-  char             *local_prefix;
+    struct hashtable *timeSeriesHash;
+    char             *local_prefix;
 } signalProcCbData_t;
 
 /* callback structure for timeSeries message handler */
 typedef struct {
-  busAssignment_t *busAssignment;
-  measurement_t   *measurement;
-  signalFormat_t   signalFormat;
-  sint32           timeResolution;
+    busAssignment_t *busAssignment;
+    measurement_t   *measurement;
+    signalFormat_t   signalFormat;
+    sint32           timeResolution;
 } messageProcCbData_t;
 
 /* simple string hash function for signal names */
 static unsigned int signalName_computeHash( void *k)
 {
-  unsigned int hash = 0;
-  int c;
+    unsigned int hash = 0;
+    int c;
 
-  while ((c = *(unsigned char *)k++)) {
-    hash = c + (hash << 6) + (hash << 16) - hash;
-  }
+    while ((c = *(unsigned char *)k++)) {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
 
-  return hash;
+    return hash;
 }
 
 /* string comparison function for signal names */
 static int signalNames_equal ( void *key1, void *key2 )
 {
-  return strcmp((char *)key1, (char *)key2) == 0;
+    return strcmp((char *)key1, (char *)key2) == 0;
 }
 
 /* used only for debugging: print data to stderr */
 static void signalProc_print(
-  const signal_t *s,
-  const canMessage_t *canMessage,
-  uint32 rawValue,
-  double physicalValue,
-  void *cbData)
+    const signal_t *s,
+    const canMessage_t *canMessage,
+    uint32 rawValue,
+    double physicalValue,
+    void *cbData)
 {
-  /* recover callback data */
-  signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
-  char *outputSignalName =
-    signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
+    /* recover callback data */
+    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
+    char *outputSignalName =
+        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
 
-  fprintf(stderr,"   %s\t=%f ~ raw=%ld\t~ %d|%d@%d%c (%f,%f)"
-          " [%f|%f] %d %ul \"%s\"\n",
-          outputSignalName,
-          physicalValue,
-          rawValue,
-          s->bit_start,
-          s->bit_len,
-          s->endianess,
-          s->signedness?'-':'+',
-          s->scale,
-          s->offset,
-          s->min,
-          s->max,
-          s->mux_type,
-          (unsigned int)s->mux_value,
-          s->comment!=NULL?s->comment:"");
+    fprintf(stderr,"   %s\t=%f ~ raw=%ld\t~ %d|%d@%d%c (%f,%f)"
+            " [%f|%f] %d %ul \"%s\"\n",
+            outputSignalName,
+            physicalValue,
+            rawValue,
+            s->bit_start,
+            s->bit_len,
+            s->endianess,
+            s->signedness?'-':'+',
+            s->scale,
+            s->offset,
+            s->min,
+            s->max,
+            s->mux_type,
+            (unsigned int)s->mux_value,
+            s->comment!=NULL?s->comment:"");
 
-  /* free temp. signal name */
-  if(outputSignalName != NULL) free(outputSignalName);
+    /* free temp. signal name */
+    if(outputSignalName != NULL) free(outputSignalName);
 }
 
 /*
@@ -102,60 +102,60 @@ static void signalProc_print(
  * a file based storage.
  */
 static void signalProc_timeSeries(
-  const signal_t *s,
-  double          dtime,
-  uint32          rawValue,
-  double          physicalValue,
-  void           *cbData)
+    const signal_t *s,
+    double          dtime,
+    uint32          rawValue,
+    double          physicalValue,
+    void           *cbData)
 {
-  /*
-   * realloc strategy:
-   *
-   * reallocate in 1kByte (128*sizeof(double)) blocks.
-   *
-   * Increasing realloc step size improves performance only marginally
-   * (tested on x86-32), but increases memory waste.
-   *
-   * realloc_count must be a power of 2.
-   */
-  const unsigned int realloc_count = (1u<<7u);
+    /*
+     * realloc strategy:
+     *
+     * reallocate in 1kByte (128*sizeof(double)) blocks.
+     *
+     * Increasing realloc step size improves performance only marginally
+     * (tested on x86-32), but increases memory waste.
+     *
+     * realloc_count must be a power of 2.
+     */
+    const unsigned int realloc_count = (1u<<7u);
 
-  /* recover callback data */
-  signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
+    /* recover callback data */
+    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
 
-  /* assemble final signal name */
-  char *outputSignalName =
-    signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
+    /* assemble final signal name */
+    char *outputSignalName =
+        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
 
-  /* look for signal in time series hash */
-  timeSeries_t *timeSeries = hashtable_search(signalProcCbData->timeSeriesHash,
-                                              (void *)outputSignalName);
+    /* look for signal in time series hash */
+    timeSeries_t *timeSeries = hashtable_search(signalProcCbData->timeSeriesHash,
+                                                (void *)outputSignalName);
 
-  /* allocate new time series structure on first value */
-  if(NULL == timeSeries) {
-    timeSeries = (timeSeries_t *)malloc(sizeof(*timeSeries));
-    timeSeries->n = 0;
-    timeSeries->time = NULL;
-    timeSeries->value = NULL;
-    hashtable_insert(signalProcCbData->timeSeriesHash,
-                     (void *)strdup(outputSignalName),
-                     (void *)timeSeries);
-  }
+    /* allocate new time series structure on first value */
+    if(NULL == timeSeries) {
+        timeSeries = (timeSeries_t *)malloc(sizeof(*timeSeries));
+        timeSeries->n = 0;
+        timeSeries->time = NULL;
+        timeSeries->value = NULL;
+        hashtable_insert(signalProcCbData->timeSeriesHash,
+                         (void *)strdup(outputSignalName),
+                         (void *)timeSeries);
+    }
 
-  /* perform reallocation if allocated buffer would be exceeded */
-  if((timeSeries->n & (realloc_count-1)) == 0) {
-    unsigned int newsize = (timeSeries->n & ~(realloc_count-1)) + realloc_count;
-    timeSeries->time  = realloc(timeSeries->time, sizeof(double)*newsize);
-    timeSeries->value = realloc(timeSeries->value, sizeof(double)*newsize);
-  }
+    /* perform reallocation if allocated buffer would be exceeded */
+    if((timeSeries->n & (realloc_count-1)) == 0) {
+        unsigned int newsize = (timeSeries->n & ~(realloc_count-1)) + realloc_count;
+        timeSeries->time  = realloc(timeSeries->time, sizeof(double)*newsize);
+        timeSeries->value = realloc(timeSeries->value, sizeof(double)*newsize);
+    }
 
-  /* append entry to time series */
-  timeSeries->time [timeSeries->n] = dtime;
-  timeSeries->value[timeSeries->n] = physicalValue;
-  timeSeries->n++;
+    /* append entry to time series */
+    timeSeries->time [timeSeries->n] = dtime;
+    timeSeries->value[timeSeries->n] = physicalValue;
+    timeSeries->n++;
 
-  /* free temp. signal name */
-  if(outputSignalName != NULL) free(outputSignalName);
+    /* free temp. signal name */
+    if(outputSignalName != NULL) free(outputSignalName);
 }
 
 /*
@@ -163,55 +163,54 @@ static void signalProc_timeSeries(
  */
 static void canMessage_process(canMessage_t *canMessage, void *cbData)
 {
-  messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
+    messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
 
-  /* lookup canMessage in message hash */
-  messageHashKey_t key = canMessage->id;
-  message_t *dbcMessage;
-  int i;
+    /* lookup canMessage in message hash */
+    messageHashKey_t key = canMessage->id;
+    message_t *dbcMessage;
+    int i;
 
-  /* loop over all bus assigments */
-  for(i = 0; i < messageProcCbData->busAssignment->n ; i++) {
-    busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
+    /* loop over all bus assigments */
+    for(i = 0; i < messageProcCbData->busAssignment->n ; i++) {
+        busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
 
-    /* check if bus matches */
-    if((entry->bus == -1) || (entry->bus == canMessage->bus)) {
-      if(NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
+        /* check if bus matches */
+        if((entry->bus == -1) || (entry->bus == canMessage->bus)) {
+            if(NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
+                /* found the message in the database */
+                char *local_prefix;
+                const char *const prefix = NULL;
 
-        /* found the message in the database */
-        char *local_prefix;
-        const char *const prefix = NULL;
+                /* setup and forward message prefix */
+                if(messageProcCbData->signalFormat & signalFormat_Message) {
+                    local_prefix = signalFormat_stringAppend(prefix, dbcMessage->name);
+                } else {
+                    if(prefix != NULL) local_prefix = strdup(prefix);
+                    else               local_prefix = NULL;
+                }
 
-        /* setup and forward message prefix */
-        if(messageProcCbData->signalFormat & signalFormat_Message) {
-          local_prefix = signalFormat_stringAppend(prefix, dbcMessage->name);
-        } else {
-          if(prefix != NULL) local_prefix = strdup(prefix);
-          else               local_prefix = NULL;
+                /* call message decoder with time series storage callback */
+                {
+                    signalProcCbData_t signalProcCbData = {
+                        messageProcCbData->measurement->timeSeriesHash,
+                        local_prefix,
+                    };
+
+                    canMessage_decode(dbcMessage,
+                                      canMessage,
+                                      messageProcCbData->timeResolution,
+                                      signalProc_timeSeries,
+                                      &signalProcCbData);
+                }
+
+                /* free local prefix */
+                if(local_prefix != NULL) free(local_prefix);
+
+                /* end search if message was found */
+                break;
+            }
         }
-
-        /* call message decoder with time series storage callback */
-        {
-          signalProcCbData_t signalProcCbData = {
-            messageProcCbData->measurement->timeSeriesHash,
-            local_prefix,
-          };
-
-          canMessage_decode(dbcMessage,
-                            canMessage,
-                            messageProcCbData->timeResolution,
-                            signalProc_timeSeries,
-                            &signalProcCbData);
-        }
-
-        /* free local prefix */
-        if(local_prefix != NULL) free(local_prefix);
-
-        /* end search if message was found */
-        break;
-      }
     }
-  }
 }
 
 /*
@@ -224,86 +223,86 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
                                 sint32 timeResolution,
                                 parserFunction_t parserFunction)
 {
-  FILE *fp;
-  measurement_t *measurement;
+    FILE *fp;
+    measurement_t *measurement;
 
-  measurement = malloc(sizeof(measurement_t));
-  if(measurement!= NULL) {
-    /* create time series hash */
-    measurement->timeSeriesHash = create_hashtable(
-        16,
-        signalName_computeHash,
-        signalNames_equal);
-    if(measurement->timeSeriesHash != NULL) {
+    measurement = malloc(sizeof(measurement_t));
+    if(measurement!= NULL) {
+        /* create time series hash */
+        measurement->timeSeriesHash = create_hashtable(
+            16,
+            signalName_computeHash,
+            signalNames_equal);
+        if(measurement->timeSeriesHash != NULL) {
 
-      /* open input file */
-      if(filename != NULL) {
-        fp = fopen(filename, "rb");
-      } else {
-        fp = stdin;
-      }
-      if(fp != NULL) {
-        /* call file processor */
-        messageProcCbData_t messageProcCbData = {
-          busAssignment,
-          measurement,
-          signalFormat,
-          timeResolution
-        };
+            /* open input file */
+            if(filename != NULL) {
+                fp = fopen(filename, "rb");
+            } else {
+                fp = stdin;
+            }
+            if(fp != NULL) {
+                /* call file processor */
+                messageProcCbData_t messageProcCbData = {
+                    busAssignment,
+                    measurement,
+                    signalFormat,
+                    timeResolution
+                };
 
-        /*
-         * invoke the file format parser on file pointer fp
-         * the parser function is responsible for closing the input
-         * file stream
-         */
-        parserFunction(fp, canMessage_process, &messageProcCbData);
-        if(filename != NULL) {
-          fclose(fp);
+                /*
+                 * invoke the file format parser on file pointer fp
+                 * the parser function is responsible for closing the input
+                 * file stream
+                 */
+                parserFunction(fp, canMessage_process, &messageProcCbData);
+                if(filename != NULL) {
+                    fclose(fp);
+                }
+            } else {
+                fprintf(stderr, "measurement_read(): can't open input file\n");
+                hashtable_destroy(measurement->timeSeriesHash, 0);
+                free(measurement);
+                measurement = NULL;
+            }
+        } else {
+            fprintf(stderr,
+                    "measurement_read(): can't create time series hash table\n");
+            free(measurement);
+            measurement = NULL;
         }
-      } else {
-        fprintf(stderr, "measurement_read(): can't open input file\n");
-        hashtable_destroy(measurement->timeSeriesHash, 0);
-        free(measurement);
-        measurement = NULL;
-      }
     } else {
-      fprintf(stderr,
-              "measurement_read(): can't create time series hash table\n");
-      free(measurement);
-      measurement = NULL;
+        fprintf(stderr,
+                "measurement_read(): can't allocate measurement structure\n");
     }
-  } else {
-    fprintf(stderr,
-            "measurement_read(): can't allocate measurement structure\n");
-  }
-  return measurement;
+    return measurement;
 }
 
 /* free measurement structure */
 void measurement_free(measurement_t *m)
 {
-  // fprintf(stderr,"freeing %p (measurement)\n",m);
-  if(m != NULL) {
+    // fprintf(stderr,"freeing %p (measurement)\n",m);
+    if(m != NULL) {
 
-    /* free time series */
-    struct hashtable *timeSeriesHash = m->timeSeriesHash;
-    struct hashtable_itr *itr;
+        /* free time series */
+        struct hashtable *timeSeriesHash = m->timeSeriesHash;
+        struct hashtable_itr *itr;
 
-    /* loop over all time series in hash */
-    if (hashtable_count(timeSeriesHash) > 0) {
-      itr = hashtable_iterator(timeSeriesHash);
-      do {
-        char         *signalName = hashtable_iterator_key(itr);
-        timeSeries_t *timeSeries = hashtable_iterator_value(itr);
+        /* loop over all time series in hash */
+        if (hashtable_count(timeSeriesHash) > 0) {
+            itr = hashtable_iterator(timeSeriesHash);
+            do {
+                char         *signalName = hashtable_iterator_key(itr);
+                timeSeries_t *timeSeries = hashtable_iterator_value(itr);
 
-        free(timeSeries->time);
-        free(timeSeries->value);
-      } while (hashtable_iterator_advance(itr));
-      free(itr);
+                free(timeSeries->time);
+                free(timeSeries->value);
+            } while (hashtable_iterator_advance(itr));
+            free(itr);
+        }
+
+        /* free key and value (timeSeries_t) and hashTable */
+        hashtable_destroy(m->timeSeriesHash, 1);
+        free(m);
     }
-
-    /* free key and value (timeSeries_t) and hashTable */
-    hashtable_destroy(m->timeSeriesHash, 1);
-    free(m);
-  }
 }

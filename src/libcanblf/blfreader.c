@@ -67,14 +67,7 @@ blfCANMessageFromVBLCANMessage(canMessage_t* canMessage,
     canMessage->bus = message->mChannel;
     canMessage->dlc = message->mDLC;
     memcpy(canMessage->byte_arr, message->mData, canMessage->dlc);
-    if (message->mHeader.mBase.mObjectType == BL_OBJ_TYPE_CAN_MESSAGE) {
-        // Make sure no scrap bytes are interfering.
-        canMessage->id = message->mID & ((1 << 11) - 1);
-    } else {
-        // Make sure no scrap bytes are interfering and
-        // shift to what is in the dbc.
-        canMessage->id = message->mID & ((1 << 29) - 1) | (1 << 31);
-    }
+    canMessage->id = message->mID;
 }
 
 static void
