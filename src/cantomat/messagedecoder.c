@@ -48,68 +48,29 @@
  * Returns "raw value" of a signal.
  * I.e. the value as it is transmitted over the network.
  */
-uint32 extract_raw_signal(const canMessage_t *const can_msg,
-                          const signal_t *const s)
+uint64 extract_raw_signal(const signal_t *const s,
+                          const uint8 *const msgpayload)
 {
-    uint32 rawValue = 0;
-    uint8 bit_len      = s->bit_len;
-    uint8 start_offset = s->bit_start & 7;
-    uint8 start_byte   = s->bit_start / 8;
-    uint8 shift;
-
-    /* align signal into ulong32 */
-    /* 0 = Big Endian, 1 = Little Endian */
-    if(s->endianess == 0) { /* big endian */
-        uint8  end_byte     = start_byte + (7 + bit_len - start_offset - 1)/8;
-        uint8  end_offset   = (start_offset - bit_len + 1) & 7;
-
-        /* loop over all source bytes from start_byte to end_byte */
-        sint8 i;
-        for(i = start_byte; i <= end_byte; i++) {
-            /* fetch source byte */
-            uint8 data = can_msg->byte_arr[i];
-
-            /* process source byte */
-            if(i == start_byte && start_offset != 7) {
-                /* less that 8 bits in start byte? mask out unused bits */
-                data &= (uint8)~0 >> (7 - start_offset);
-                shift = start_offset + 1;
-            } else {
-                shift = 8; /* use all eight bits */
-            }
-            if(i == end_byte && end_offset != 0) {
-                /* less that 8 bits in end byte? shift out unused bits */
-                data >>= end_offset;
-                shift -= end_offset;
-            }
-
-            /* store processed byte */
-            rawValue <<= shift; /* make room for shift bits */
-            rawValue |= data;   /* insert new bits at low position */
-        }
-    } else {
-        /* little endian - similar algorithm with reverse bit significance  */
-        uint8  end_byte     = start_byte + (bit_len + start_offset - 1)/8;
-        uint8  end_offset   = (start_offset + bit_len - 1) & 7;
-
-        sint8 i;
-        for(i = end_byte; i >= start_byte; i--) {
-            uint8 data = can_msg->byte_arr[i];
-            if(i == end_byte && end_offset != 7) {
-                data &= (uint8)~0 >> (7 - end_offset);
-                shift = end_offset + 1;
-            } else {
-                shift = 8;
-            }
-            if(i == start_byte && start_offset != 0) {
-                data >>= start_offset;
-                shift -= start_offset;
-            }
-            rawValue <<= shift;
-            rawValue |= data;
-        }
+    if (s->bit_start > 63) {
+        fprintf(stderr, "Start bit (>63) would shift away everything!\n");
+        return 0;
     }
-    return rawValue;
+
+    uint64 raw_value = 0;
+    unsigned char *p = (unsigned char *) &raw_value;
+    uint8 i;
+    for (i = 0; i < 8; i++) {
+        p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
+    }
+
+    // Shifting 64 or more is UB, use the whole thing instead.
+    // We cannot handle signals with this many bits, just return 0?
+    if (s->bit_len < 64) {
+        raw_value = (raw_value >> s->bit_start) & ((1ULL << s->bit_len) - 1);
+    } else {
+        raw_value = 0;//(raw_value >> s->bit_start);
+    }
+    return raw_value;
 }
 
 
@@ -120,14 +81,14 @@ void canMessage_decode(message_t      *dbcMessage,
                        void           *cbData)
 {
     signal_list_t *sl;
-    uint32  sec = canMessage->t.tv_sec;
-    sint32 nsec = canMessage->t.tv_nsec;
+    uint64_t  sec = canMessage->t.tv_sec;
+    int64_t nsec = canMessage->t.tv_nsec;
 
     /* limit time resolution */
     if(timeResolution != 0) {
         nsec -= (nsec % timeResolution);
     }
-    double dtime = nsec * 1e-9 + sec;
+    double dtime = sec + nsec * 1e-9;
 
     /* debug: dump canMessage */
 #if 0
@@ -146,12 +107,12 @@ void canMessage_decode(message_t      *dbcMessage,
 
         const signal_t *const s = sl->signal;
 
-        uint32 rawValue = extract_raw_signal(canMessage, s);
+        uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr);
 
         /* perform sign extension */
-        if(s->signedness && (s->bit_len < 32)) {
-            sint32 m = 1 << (s->bit_len-1);
-            rawValue = ((sint32)rawValue ^ m) - m;
+        if (s->signedness && (s->bit_len < 64)) {
+            uint64_t sign_mask = 1ULL << (s->bit_len-1);
+            rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
         }
 
         /*
@@ -166,8 +127,8 @@ void canMessage_decode(message_t      *dbcMessage,
          * [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
          */
         double physicalValue;
-        if(s->signedness) {
-            physicalValue = (double) (sint32) rawValue * s->scale + s->offset;
+        if (s->signedness) {
+            physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
         } else {
             physicalValue = (double) rawValue * s->scale + s->offset;
         }
