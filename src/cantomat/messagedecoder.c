@@ -58,7 +58,9 @@ uint64 extract_raw_signal(const signal_t *const s,
     // endianess 1 is little, 0 is big
     for (i = 0; i < 8; i++) {
         p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
+        //fprintf(stderr, "%02X ", p[i]);
     }
+    //fprintf(stderr, "\n");
 
     // Big endian has bit start to msb, we have flipped to order of bytes.
     // So we need to calculate where the lsb is in this new order.
@@ -68,12 +70,21 @@ uint64 extract_raw_signal(const signal_t *const s,
         start -= s->bit_len - 1;
     }
 
-    // We cannot handle signals with this many bits, just return 0?
-    if ((start + s->bit_len) < 64) {
-        raw_value = (raw_value >> start) & ((1ULL << s->bit_len) - 1);
-    } else {
-        raw_value = 0;//(raw_value >> s->bit_start);
+    //fprintf(stderr, "orig: 0x%16llX\n", raw_value);
+    //fprintf(stderr, "%u %u\n", start, s->bit_len);
+
+    // We cannot handle these signals.
+    if (start > 63) {
+        //fprintf(stderr, "WARNING: Start bit out of bounds, skipping!\n");
+        return 0;
     }
+
+    raw_value >>= start;
+    //fprintf(stderr, "shft: 0x%016llX\n", raw_value);
+    if (s->bit_len < 64) {
+        raw_value &= ((1ULL << s->bit_len) - 1);
+    }
+    //fprintf(stderr, "mask: 0x%016llX\n", raw_value);
     return raw_value;
 }
 
@@ -103,17 +114,21 @@ void canMessage_decode(message_t      *dbcMessage,
                 canMessage->byte_arr[0], canMessage->byte_arr[1],
                 canMessage->byte_arr[2], canMessage->byte_arr[3],
                 canMessage->byte_arr[4], canMessage->byte_arr[5],
-                canMessage->byte_arr[6], canMessage->byte_arr[7] );
+                canMessage->byte_arr[6], canMessage->byte_arr[7]);
     }
 
     /* iterate over all signals */
     for(sl = dbcMessage->signal_list; sl != NULL; sl = sl->next) {
 
         const signal_t *const s = sl->signal;
+        //fprintf(stderr, "%s\n", s->name);
+
         uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr);
+
 
         /* perform sign extension */
         if (s->signedness && (s->bit_len < 64)) {
+            fprintf(stderr, "WARNING: Signed signales not yet verified!\n");
             uint64_t sign_mask = 1ULL << (s->bit_len-1);
             rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
         }
@@ -129,14 +144,18 @@ void canMessage_decode(message_t      *dbcMessage,
          * direction.
          * [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
          */
-        double physicalValue;
-        if (s->signedness) {
-            physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
-        } else {
-            physicalValue = (double) rawValue * s->scale + s->offset;
-        }
+        //double physicalValue;
+        //if (s->signedness) {
+        //    physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
+        //} else {
+        //    physicalValue = (double) rawValue * s->scale + s->offset;
+        //}
+        double physicalValue = (double) rawValue;
 
         /* invoke signal processing callback function */
+        //fprintf(stderr, "%s :: 0x%llx (%llu) -> %f (%f, %f)\n",
+        //        s->name, rawValue, rawValue,
+        //        physicalValue, s->scale, s->offset);
         signalProcCb(s, dtime, rawValue, physicalValue, cbData);
     }
 }
