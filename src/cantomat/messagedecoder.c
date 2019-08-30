@@ -75,6 +75,7 @@ uint64 extract_raw_signal(const signal_t *const s,
 
     // We cannot handle these signals.
     if (start > 63) {
+        // TODO: This should propagate to maybe not even passing on signal?
         //fprintf(stderr, "WARNING: Start bit out of bounds, skipping!\n");
         return 0;
     }
@@ -95,8 +96,7 @@ void canMessage_decode(message_t      *dbcMessage,
                        signalProcCb_t  signalProcCb,
                        void           *cbData)
 {
-    signal_list_t *sl;
-    uint64_t  sec = canMessage->t.tv_sec;
+    uint64_t sec = canMessage->t.tv_sec;
     int64_t nsec = canMessage->t.tv_nsec;
 
     /* limit time resolution */
@@ -105,26 +105,12 @@ void canMessage_decode(message_t      *dbcMessage,
     }
     double dtime = sec + nsec * 1e-9;
 
-    /* debug: dump canMessage */
-    if (canMessage->id == 0) {//2565866755) {
-        fprintf(stderr,
-                "%d.%09d %d %04x %d %d    %02x %02x %02x %02x %02x %02x %02x %02x\n",
-                sec, nsec,
-                canMessage->bus, canMessage->id, canMessage->dlc,
-                canMessage->byte_arr[0], canMessage->byte_arr[1],
-                canMessage->byte_arr[2], canMessage->byte_arr[3],
-                canMessage->byte_arr[4], canMessage->byte_arr[5],
-                canMessage->byte_arr[6], canMessage->byte_arr[7]);
-    }
-
     /* iterate over all signals */
+    signal_list_t *sl;
     for(sl = dbcMessage->signal_list; sl != NULL; sl = sl->next) {
 
         const signal_t *const s = sl->signal;
-        //fprintf(stderr, "%s\n", s->name);
-
         uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr);
-
 
         /* perform sign extension */
         if (s->signedness && (s->bit_len < 64)) {
@@ -133,29 +119,20 @@ void canMessage_decode(message_t      *dbcMessage,
             rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
         }
 
-        /*
-         * Factor, Offset and Physical Unit
-         *
-         * The "physical value" of a signal is the value of the physical
-         * quantity (e.g. speed, rpm, temperature, etc.) that represents
-         * the signal.
-         * The signal's conversion formula (Factor, Offset) is used to
-         * transform the raw value to a physical value or in the reverse
-         * direction.
-         * [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
-         */
-        //double physicalValue;
-        //if (s->signedness) {
-        //    physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
-        //} else {
-        //    physicalValue = (double) rawValue * s->scale + s->offset;
-        //}
-        double physicalValue = (double) rawValue;
+        if (s->signal_val_type != svt_integer) {
+            fprintf(stderr, "WARNING: Float and double not implemented yet!\n");
+            return;
+        }
+
+        // [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
+        double physicalValue;
+        if (s->signedness) {
+            physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
+        } else {
+            physicalValue = (double) rawValue * s->scale + s->offset;
+        }
 
         /* invoke signal processing callback function */
-        //fprintf(stderr, "%s :: 0x%llx (%llu) -> %f (%f, %f)\n",
-        //        s->name, rawValue, rawValue,
-        //        physicalValue, s->scale, s->offset);
         signalProcCb(s, dtime, rawValue, physicalValue, cbData);
     }
 }
