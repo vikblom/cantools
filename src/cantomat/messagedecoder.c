@@ -51,22 +51,26 @@
 uint64 extract_raw_signal(const signal_t *const s,
                           const uint8 *const msgpayload)
 {
-    if (s->bit_start > 63) {
-        fprintf(stderr, "Start bit (>63) would shift away everything!\n");
-        return 0;
-    }
 
     uint64 raw_value = 0;
     unsigned char *p = (unsigned char *) &raw_value;
     uint8 i;
+    // endianess 1 is little, 0 is big
     for (i = 0; i < 8; i++) {
         p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
     }
 
-    // Shifting 64 or more is UB, use the whole thing instead.
+    // Big endian has bit start to msb, we have flipped to order of bytes.
+    // So we need to calculate where the lsb is in this new order.
+    uint8_t start = s->bit_start;
+    if (!s->endianess) {
+        start = 56 - 8*(start/8) + start%8;
+        start -= s->bit_len - 1;
+    }
+
     // We cannot handle signals with this many bits, just return 0?
-    if (s->bit_len < 64) {
-        raw_value = (raw_value >> s->bit_start) & ((1ULL << s->bit_len) - 1);
+    if ((start + s->bit_len) < 64) {
+        raw_value = (raw_value >> start) & ((1ULL << s->bit_len) - 1);
     } else {
         raw_value = 0;//(raw_value >> s->bit_start);
     }
@@ -91,22 +95,21 @@ void canMessage_decode(message_t      *dbcMessage,
     double dtime = sec + nsec * 1e-9;
 
     /* debug: dump canMessage */
-#if 0
-    fprintf(stderr,
-            "%d.%09d %d %04x     %02x %02x %02x %02x %02x %02x %02x %02x\n",
-            sec, nsec,
-            canMessage->bus, canMessage->id,
-            canMessage->byte_arr[0], canMessage->byte_arr[1],
-            canMessage->byte_arr[2], canMessage->byte_arr[3],
-            canMessage->byte_arr[4], canMessage->byte_arr[5],
-            canMessage->byte_arr[6], canMessage->byte_arr[7] );
-#endif
+    if (canMessage->id == 0) {//2565866755) {
+        fprintf(stderr,
+                "%d.%09d %d %04x %d %d    %02x %02x %02x %02x %02x %02x %02x %02x\n",
+                sec, nsec,
+                canMessage->bus, canMessage->id, canMessage->dlc,
+                canMessage->byte_arr[0], canMessage->byte_arr[1],
+                canMessage->byte_arr[2], canMessage->byte_arr[3],
+                canMessage->byte_arr[4], canMessage->byte_arr[5],
+                canMessage->byte_arr[6], canMessage->byte_arr[7] );
+    }
 
     /* iterate over all signals */
     for(sl = dbcMessage->signal_list; sl != NULL; sl = sl->next) {
 
         const signal_t *const s = sl->signal;
-
         uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr);
 
         /* perform sign extension */
@@ -132,25 +135,6 @@ void canMessage_decode(message_t      *dbcMessage,
         } else {
             physicalValue = (double) rawValue * s->scale + s->offset;
         }
-
-#if 0
-        fprintf(stderr,"   %s\t=%f ~ raw=%ld\t~ %d|%d@%d%c (%f,%f)"
-                " [%f|%f] %d %ul \"%s\"\n",
-                outputSignalName,
-                physicalValue,
-                rawValue,
-                s->bit_start,
-                s->bit_len,
-                s->endianess,
-                s->signedness?'-':'+',
-                s->scale,
-                s->offset,
-                s->min,
-                s->max,
-                s->mux_type,
-                (unsigned int)s->mux_value,
-                s->comment!=NULL?s->comment:"");
-#endif
 
         /* invoke signal processing callback function */
         signalProcCb(s, dtime, rawValue, physicalValue, cbData);
