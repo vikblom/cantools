@@ -19,7 +19,7 @@
 
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 extern void yyrestart(FILE *input_file);
-extern int yyparse (void *YYPARSE_PARAM);
+extern int yyparse(void *YYPARSE_PARAM);
 
 #include "dbcmodel.h"
 #include "dbcreader.h"
@@ -40,6 +40,7 @@ dbc_t *dbc_read_file(char *filename)
     yyrestart(f);
     int error = yyparse((void *)dbc);
     fclose(f);
+
     if (!error) {
         dbc->filename = strdup(filename);
     } else {

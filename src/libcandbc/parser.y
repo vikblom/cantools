@@ -374,14 +374,14 @@ dbc:
       { current_dbc->attribute_definition_list = $16; }
         attribute_definition_default_list /* 18 changes attr. definition list */
         attribute_list            /* 19 changes target objects */
-	attribute_rel_list        /* 20 */
+        attribute_rel_list        /* 20 */
         val_list                  /* 21 */
         sig_valtype_list          /* 22 changes signals */
         signal_group_list         /* 23 */
       {
         current_dbc->version            = $2;
         current_dbc->signal_group_list  = $23;
-	current_dbc->attribute_rel_list = $20;
+        current_dbc->attribute_rel_list = $20;
       }
     ;
 

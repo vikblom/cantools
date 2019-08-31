@@ -66,7 +66,6 @@
 
 
 /* First part of user prologue.  */
-#line 17 "parser.y"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -81,7 +80,6 @@
 #define YYMAXDEPTH 20000
 
 
-#line 85 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus
@@ -184,7 +182,6 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 37 "parser.y"
 
   number_t                     number;
   double                       double_val;
@@ -215,7 +212,6 @@ union YYSTYPE
   valtable_list_t             *valtable_list;
   valtable_t                  *valtable;
 
-#line 219 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -231,7 +227,6 @@ int yyparse (void* dbcptr);
 #endif /* !YY_YY_C_USERS_A276720_GIT_CANTOOLS_BUILD_SRC_LIBCANDBC_PARSER_H_INCLUDED  */
 
 /* Second part of user prologue.  */
-#line 68 "parser.y"
 
 extern int yylex (void);
 extern char *yytext;
@@ -419,7 +414,6 @@ void attribute_append(
 }
 
 
-#line 423 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
 
 
 #ifdef short
@@ -1712,7 +1706,6 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 352 "parser.y"
     {
         CREATE(network_t, network);
         current_dbc = (dbc_t *)dbcptr;
@@ -1720,76 +1713,56 @@ yyreduce:
         current_dbc->network->comment = NULL;
         current_dbc->network->attribute_list = NULL;
       }
-#line 1724 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 3:
-#line 363 "parser.y"
     { current_dbc->node_list = (yyvsp[0].node_list); }
-#line 1730 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 4:
-#line 365 "parser.y"
     { current_dbc->valtable_list = (yyvsp[0].valtable_list); }
-#line 1736 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 5:
-#line 367 "parser.y"
     { current_dbc->message_list = (yyvsp[0].message_list); }
-#line 1742 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 6:
-#line 370 "parser.y"
     { current_dbc->envvar_list  = (yyvsp[0].envvar_list); }
-#line 1748 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 7:
-#line 374 "parser.y"
     { current_dbc->attribute_definition_list = (yyvsp[0].attribute_definition_list); }
-#line 1754 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 8:
-#line 381 "parser.y"
     {
         current_dbc->version            = (yyvsp[-21].string);
         current_dbc->signal_group_list  = (yyvsp[0].signal_group_list);
 	current_dbc->attribute_rel_list = (yyvsp[-3].attribute_rel_list);
       }
-#line 1764 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 9:
-#line 388 "parser.y"
     { (yyval.string) = (yyvsp[0].string); }
-#line 1770 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 42:
-#line 432 "parser.y"
     {
       (yyval.envvar_list) = NULL;
     }
-#line 1778 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 43:
-#line 436 "parser.y"
     {
       CREATE(envvar_list_t,list);
       list->envvar = (yyvsp[-1].envvar);
       list->next   = (yyvsp[0].envvar_list);
       (yyval.envvar_list) = list;
     }
-#line 1789 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 44:
-#line 460 "parser.y"
     {
       CREATE(envvar_t, envvar);
 
@@ -1806,52 +1779,42 @@ yyreduce:
       envvar->comment = NULL;
       (yyval.envvar) = envvar;
     }
-#line 1810 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 47:
-#line 487 "parser.y"
     {
         free((yyvsp[-3].string));
       }
-#line 1818 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 48:
-#line 498 "parser.y"
     {
       CREATE(attribute_value_t, av);
       av->value_type    = vt_integer; /* preliminary value type */
       av->value.int_val = (yyvsp[0].number);
       (yyval.attribute_value) = av;
     }
-#line 1829 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 49:
-#line 505 "parser.y"
     {
       CREATE(attribute_value_t, av);
       av->value_type = vt_string;
       av->value.string_val = (yyvsp[0].string);
       (yyval.attribute_value) = av;
     }
-#line 1840 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 50:
-#line 512 "parser.y"
     {
       CREATE(attribute_value_t, av);
       av->value_type = vt_float;
       av->value.double_val = (yyvsp[0].double_val);
       (yyval.attribute_value) = av;
     }
-#line 1851 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 53:
-#line 527 "parser.y"
     {
       if(current_dbc->network != NULL) {
         attribute_append(&current_dbc->network->attribute_list,(yyvsp[-2].string),(yyvsp[-1].attribute_value));
@@ -1861,11 +1824,9 @@ yyreduce:
         attribute_value_free((yyvsp[-1].attribute_value));
       }
     }
-#line 1865 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 54:
-#line 537 "parser.y"
     {
       node_t *const node = node_find((yyvsp[-2].string));
       if(node != NULL) {
@@ -1876,11 +1837,9 @@ yyreduce:
       }
       free((yyvsp[-2].string));
     }
-#line 1880 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 55:
-#line 548 "parser.y"
     {
       message_t *const message = message_find((yyvsp[-2].number));
       if(message != NULL) {
@@ -1891,11 +1850,9 @@ yyreduce:
         free((yyvsp[-4].string));
       }
     }
-#line 1895 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 56:
-#line 565 "parser.y"
     {
       signal_t *const signal = signal_find((yyvsp[-3].number),(yyvsp[-2].string));
 
@@ -1908,30 +1865,24 @@ yyreduce:
       }
       free((yyvsp[-2].string));
     }
-#line 1912 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 57:
-#line 581 "parser.y"
     {
       (yyval.attribute_rel_list) = NULL;
     }
-#line 1920 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 58:
-#line 585 "parser.y"
     {
       CREATE(attribute_rel_list_t,list);
       list->attribute_rel = (yyvsp[-1].attribute_rel);
       list->next          = (yyvsp[0].attribute_rel_list);
       (yyval.attribute_rel_list) = list;
     }
-#line 1931 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 59:
-#line 604 "parser.y"
     {
       node_t *node = node_find((yyvsp[-5].string));
       message_t *message = message_find((yyvsp[-3].number));
@@ -1955,11 +1906,9 @@ yyreduce:
       free((yyvsp[-5].string));
       free((yyvsp[-2].signal_name));
     }
-#line 1959 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 62:
-#line 637 "parser.y"
     {
       attribute_definition_t *const ad = attribute_definition_find((yyvsp[-2].string), (yyvsp[-3].attribute_object_class));
       free((yyvsp[-2].string));
@@ -1973,11 +1922,9 @@ yyreduce:
         }
       }
     }
-#line 1977 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 63:
-#line 652 "parser.y"
     {
       attribute_definition_t *const ad = attribute_definition_find((yyvsp[-2].string), (yyvsp[-3].attribute_object_class));
       free((yyvsp[-2].string));
@@ -1985,11 +1932,9 @@ yyreduce:
         ad->default_value.double_val = (yyvsp[-1].double_val);
       }
     }
-#line 1989 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 64:
-#line 661 "parser.y"
     {
       attribute_definition_t *const ad = attribute_definition_find((yyvsp[-2].string), (yyvsp[-3].attribute_object_class));
       if(ad != NULL) {
@@ -2009,42 +1954,32 @@ yyreduce:
       }
       free((yyvsp[-2].string));
     }
-#line 2013 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 65:
-#line 683 "parser.y"
     { (yyval.attribute_object_class) = aoc_object; }
-#line 2019 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 66:
-#line 684 "parser.y"
     { (yyval.attribute_object_class) = aoc_relation; }
-#line 2025 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 67:
-#line 689 "parser.y"
     {
       (yyval.attribute_definition_list) = NULL;
     }
-#line 2033 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 68:
-#line 693 "parser.y"
     {
       CREATE(attribute_definition_list_t,list);
       list->attribute_definition = (yyvsp[-1].attribute_definition);
       list->next                 = (yyvsp[0].attribute_definition_list);
       (yyval.attribute_definition_list) = list;
     }
-#line 2044 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 69:
-#line 704 "parser.y"
     {
       CREATE(attribute_definition_t,ad);
       ad->object_type           = (yyvsp[-5].object_type);
@@ -2055,11 +1990,9 @@ yyreduce:
       ad->default_value.int_val = 0;
       (yyval.attribute_definition) = ad;
     }
-#line 2059 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 70:
-#line 716 "parser.y"
     {
       CREATE(attribute_definition_t,ad);
       ad->object_type              = (yyvsp[-5].object_type);
@@ -2070,11 +2003,9 @@ yyreduce:
       ad->default_value.double_val = 0;
       (yyval.attribute_definition) = ad;
     }
-#line 2074 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 71:
-#line 727 "parser.y"
     {
       CREATE(attribute_definition_t,ad);
       ad->object_type              = (yyvsp[-3].object_type);
@@ -2083,11 +2014,9 @@ yyreduce:
       ad->default_value.string_val = NULL;
       (yyval.attribute_definition) = ad;
     }
-#line 2087 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 72:
-#line 736 "parser.y"
     {
       CREATE(attribute_definition_t,ad);
       ad->object_type            = (yyvsp[-4].object_type);
@@ -2097,11 +2026,9 @@ yyreduce:
       ad->default_value.enum_val = NULL;
       (yyval.attribute_definition) = ad;
     }
-#line 2101 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 73:
-#line 746 "parser.y"
     {
       CREATE(attribute_definition_t,ad);
       ad->object_type           = (yyvsp[-5].object_type);
@@ -2112,53 +2039,37 @@ yyreduce:
       ad->default_value.hex_val = 0;
       (yyval.attribute_definition) = ad;
     }
-#line 2116 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 74:
-#line 759 "parser.y"
     { (yyval.object_type) = ot_network; }
-#line 2122 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 75:
-#line 760 "parser.y"
     { (yyval.object_type) = ot_node; }
-#line 2128 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 76:
-#line 761 "parser.y"
     { (yyval.object_type) = ot_message; }
-#line 2134 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 77:
-#line 762 "parser.y"
     { (yyval.object_type) = ot_signal; }
-#line 2140 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 78:
-#line 763 "parser.y"
     { (yyval.object_type) = ot_envvar; }
-#line 2146 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 79:
-#line 765 "parser.y"
     { (yyval.object_type) = ot_node_signal; }
-#line 2152 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 80:
-#line 767 "parser.y"
     { (yyval.object_type) = ot_node_message; }
-#line 2158 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 83:
-#line 780 "parser.y"
     {
       signal_t *const signal = signal_find((yyvsp[-3].number),(yyvsp[-2].signal_name));
 
@@ -2176,11 +2087,9 @@ yyreduce:
       }
       free((yyvsp[-2].signal_name));
     }
-#line 2180 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 84:
-#line 799 "parser.y"
     {
       envvar_t *const envvar = envvar_find((yyvsp[-2].string));
 
@@ -2198,41 +2107,33 @@ yyreduce:
       }
       free((yyvsp[-2].string));
     }
-#line 2202 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 85:
-#line 820 "parser.y"
     {
       (yyval.val_map) = NULL;
     }
-#line 2210 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 86:
-#line 824 "parser.y"
     {
       CREATE(val_map_t, val_map);
       val_map->val_map_entry = (yyvsp[-1].val_map_entry);
       val_map->next          = (yyvsp[0].val_map);
       (yyval.val_map) = val_map;
     }
-#line 2221 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 87:
-#line 834 "parser.y"
     {
       CREATE(val_map_entry_t, val_map_entry);
       val_map_entry->index = (yyvsp[-1].number);
       val_map_entry->value = (yyvsp[0].string);
       (yyval.val_map_entry) = val_map_entry;
     }
-#line 2232 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 90:
-#line 859 "parser.y"
     {
       signal_t *const s = signal_find((yyvsp[-4].number),(yyvsp[-3].string));
       free((yyvsp[-3].string));
@@ -2243,11 +2144,9 @@ yyreduce:
         }
       }
     }
-#line 2247 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 93:
-#line 881 "parser.y"
     {
       if(current_dbc->network != NULL) {
 	current_dbc->network->comment =
@@ -2256,11 +2155,9 @@ yyreduce:
 	string_free((yyvsp[-1].string));
       }
     }
-#line 2260 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 94:
-#line 890 "parser.y"
     {
       envvar_t *const envvar = envvar_find((yyvsp[-2].string));
       if(envvar != NULL) {
@@ -2271,11 +2168,9 @@ yyreduce:
       }
       string_free((yyvsp[-2].string));
     }
-#line 2275 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 95:
-#line 901 "parser.y"
     {
       node_t *const node = node_find((yyvsp[-2].string));
       if(node != NULL) {
@@ -2286,11 +2181,9 @@ yyreduce:
       }
       string_free((yyvsp[-2].string));
     }
-#line 2290 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 96:
-#line 912 "parser.y"
     {
       message_t *const message = message_find((yyvsp[-2].number));
       if(message != NULL) {
@@ -2300,11 +2193,9 @@ yyreduce:
         string_free((yyvsp[-1].string));
       }
     }
-#line 2304 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 97:
-#line 922 "parser.y"
     {
       signal_t *const signal = signal_find((yyvsp[-3].number), (yyvsp[-2].string));
       if(signal != NULL) {
@@ -2315,30 +2206,24 @@ yyreduce:
       }
       string_free((yyvsp[-2].string));
     }
-#line 2319 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 98:
-#line 938 "parser.y"
     {
       (yyval.message_list) = NULL;
     }
-#line 2327 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 99:
-#line 942 "parser.y"
     {
       CREATE(message_list_t,list);
       list->message = (yyvsp[-1].message);
       list->next    = (yyvsp[0].message_list);
       (yyval.message_list) = list;
     }
-#line 2338 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 100:
-#line 952 "parser.y"
     {
       CREATE(message_t, m);
       m->id               = (yyvsp[-5].number);
@@ -2351,30 +2236,24 @@ yyreduce:
       m->transmitter_list = NULL;
       (yyval.message) = m;
     }
-#line 2355 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 101:
-#line 970 "parser.y"
     {
       (yyval.signal_list) = NULL;
     }
-#line 2363 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 102:
-#line 974 "parser.y"
     {
       CREATE(signal_list_t,list);
       list->signal = (yyvsp[-1].signal);
       list->next   = (yyvsp[0].signal_list);
       (yyval.signal_list) = list;
     }
-#line 2374 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 103:
-#line 988 "parser.y"
     {
       CREATE(signal_t, signal);
       signal->name       = (yyvsp[-20].signal_name);
@@ -2396,20 +2275,16 @@ yyreduce:
       signal->val_map         = NULL;
       (yyval.signal) = signal;
     }
-#line 2400 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 104:
-#line 1015 "parser.y"
     {
       (yyval.mux_info).mux_type = m_signal;
       (yyval.mux_info).mux_value = 0;
     }
-#line 2409 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 105:
-#line 1020 "parser.y"
     {
       switch((yyvsp[0].string)[0]) {
       case 'M':
@@ -2426,169 +2301,125 @@ yyreduce:
       }
       free((yyvsp[0].string));
     }
-#line 2430 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 106:
-#line 1038 "parser.y"
     { (yyval.signal_name) = (string_t)(yyvsp[0].string); }
-#line 2436 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 107:
-#line 1039 "parser.y"
     { (yyval.signal_name_list) = (string_list_t *)(yyvsp[0].string_list); }
-#line 2442 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 108:
-#line 1043 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[0].string);
       list->next   = NULL;
       (yyval.string_list) = list;
     }
-#line 2453 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 109:
-#line 1050 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[-1].string);
       list->next   = (yyvsp[0].string_list);
       (yyval.string_list) = list;
     }
-#line 2464 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 110:
-#line 1060 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[0].string);
       list->next   = NULL;
       (yyval.string_list) = list;
     }
-#line 2475 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 111:
-#line 1067 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[-2].string);
       list->next   = (yyvsp[0].string_list);
       (yyval.string_list) = list;
     }
-#line 2486 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 112:
-#line 1077 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[0].string);
       list->next   = NULL;
       (yyval.string_list) = list;
     }
-#line 2497 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 113:
-#line 1084 "parser.y"
     {
       CREATE(string_list_t,list);
       list->string = (yyvsp[-2].string);
       list->next   = (yyvsp[0].string_list);
       (yyval.string_list) = list;
     }
-#line 2508 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 114:
-#line 1094 "parser.y"
     { (yyval.double_val) = (yyvsp[0].double_val); }
-#line 2514 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 115:
-#line 1095 "parser.y"
     { (yyval.double_val) = NAN; }
-#line 2520 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 116:
-#line 1096 "parser.y"
     { (yyval.double_val) = (double)(yyvsp[0].number); }
-#line 2526 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 117:
-#line 1099 "parser.y"
     { (yyval.number) = (yyvsp[0].number); }
-#line 2532 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 118:
-#line 1100 "parser.y"
     { (yyval.number) = (yyvsp[0].number); }
-#line 2538 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 119:
-#line 1102 "parser.y"
     { (yyval.double_val) = (yyvsp[0].double_val); }
-#line 2544 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 120:
-#line 1103 "parser.y"
     { (yyval.double_val) = (yyvsp[0].double_val); }
-#line 2550 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 121:
-#line 1104 "parser.y"
     { (yyval.double_val) = (yyvsp[0].double_val); }
-#line 2556 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 122:
-#line 1105 "parser.y"
     { (yyval.double_val) = (yyvsp[0].double_val); }
-#line 2562 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 123:
-#line 1107 "parser.y"
     { (yyval.number) = (yyvsp[0].number); }
-#line 2568 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 124:
-#line 1110 "parser.y"
     { (yyval.number) = 0; }
-#line 2574 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 125:
-#line 1111 "parser.y"
     { (yyval.number) = 1; }
-#line 2580 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 126:
-#line 1118 "parser.y"
     {
       (yyval.node_list) = NULL;
     }
-#line 2588 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 127:
-#line 1122 "parser.y"
     {
       CREATE(node_list_t,list);
       CREATE(node_t,node);
@@ -2599,38 +2430,30 @@ yyreduce:
       list->next = (yyvsp[0].node_list);
       (yyval.node_list) = list;
     }
-#line 2603 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 128:
-#line 1135 "parser.y"
     {
       (yyval.node_list) = (yyvsp[0].node_list);
     }
-#line 2611 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 129:
-#line 1142 "parser.y"
     {
       (yyval.valtable_list) = NULL;
     }
-#line 2619 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 130:
-#line 1146 "parser.y"
     {
       CREATE(valtable_list_t, valtable_list);
       valtable_list->next     = (yyvsp[0].valtable_list);
       valtable_list->valtable = (yyvsp[-1].valtable);
       (yyval.valtable_list) = valtable_list;
     }
-#line 2630 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 131:
-#line 1156 "parser.y"
     {
       CREATE(valtable_t, valtable);
       valtable->name    = (yyvsp[-2].string);
@@ -2638,11 +2461,9 @@ yyreduce:
       valtable->val_map = (yyvsp[-1].val_map);
       (yyval.valtable) = valtable;
     }
-#line 2642 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 133:
-#line 1173 "parser.y"
     {
       CREATE(signal_group_t,sg);
       sg->id   = (yyvsp[-5].number);
@@ -2651,30 +2472,24 @@ yyreduce:
       sg->signal_name_list = (yyvsp[-1].signal_name_list);
       (yyval.signal_group) = sg;
     }
-#line 2655 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 134:
-#line 1186 "parser.y"
     {
       (yyval.signal_group_list) = NULL;
     }
-#line 2663 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 135:
-#line 1190 "parser.y"
     {
       CREATE(signal_group_list_t,list);
       list->signal_group = (yyvsp[-1].signal_group);
       list->next         = (yyvsp[0].signal_group_list);
       (yyval.signal_group_list) = list;
     }
-#line 2674 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
   case 136:
-#line 1201 "parser.y"
     {
       message_t *const message = message_find((yyvsp[-3].number));
       if(message != NULL) {
@@ -2686,11 +2501,9 @@ yyreduce:
 	string_list_free((yyvsp[-1].string_list));
       }
     }
-#line 2690 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
     break;
 
 
-#line 2694 "C:/Users/A276720/git/cantools/build/src/libcandbc/parser.c"
 
       default: break;
     }
