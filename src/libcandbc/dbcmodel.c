@@ -192,6 +192,24 @@ static void network_free(network_t *network)
   }
 }
 
+dbc_t *dbc_new()
+{
+    dbc_t *dbc = malloc(sizeof(dbc_t));
+    if(dbc != NULL) {
+        dbc->filename = NULL;
+        dbc->version = NULL;
+        dbc->node_list = NULL;
+        dbc->valtable_list = NULL;
+        dbc->message_list = NULL;
+        dbc->envvar_list = NULL;
+        dbc->attribute_rel_list = NULL;
+        dbc->attribute_definition_list = NULL;
+        dbc->signal_group_list = NULL;
+        dbc->network = NULL;
+    }
+    return dbc;
+}
+
 void dbc_free(dbc_t *dbc)
 {
   if(dbc != NULL) {

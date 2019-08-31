@@ -18,68 +18,32 @@
 #include <string.h>
 
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
+extern void yyrestart(FILE *input_file);
+extern int yyparse (void *YYPARSE_PARAM);
 
 #include "dbcmodel.h"
 #include "dbcreader.h"
 
 dbc_t *dbc_read_file(char *filename)
 {
-  extern void yyrestart( FILE *input_file );
-  extern YY_BUFFER_STATE yy_create_buffer( FILE *file, int size );
-  extern void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer );
-  extern char *current_yacc_file;
-  extern FILE *yyin;
-  extern int yyparse (void *YYPARSE_PARAM);
-  extern void yy_delete_buffer ( YY_BUFFER_STATE b );
-  int error;
-  YY_BUFFER_STATE bufstate;
+    if (!filename)
+        return NULL;
 
-  CREATE(dbc_t, dbc);
-  if(dbc != NULL) {
-    dbc->filename = NULL;
-    dbc->version = NULL;
-    dbc->node_list = NULL;
-    dbc->valtable_list = NULL;
-    dbc->message_list = NULL;
-    dbc->envvar_list = NULL;
-    dbc->attribute_rel_list = NULL;
-    dbc->attribute_definition_list = NULL;
-    dbc->signal_group_list = NULL;
-    dbc->network = NULL;
+    dbc_t *dbc = dbc_new();
 
-    current_yacc_file = filename;
-
-    if(filename != NULL) {
-      yyin = fopen (filename, "r");
-      if (yyin == NULL) {
-        fprintf(stderr,"error: can't open the dbc file '%s' for reading\n",
-                filename);
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        fprintf(stderr,"error: can't open the dbc file '%s'\n", filename);
         dbc_free(dbc);
         return NULL;
-      }
-    } else {
-      yyin = stdin;
     }
-
-    yyrestart(yyin);
-
-    bufstate = (void *)yy_create_buffer (yyin, 65535);
-    yy_switch_to_buffer (bufstate);
-    error = yyparse ((void *)dbc);
-    yy_delete_buffer (bufstate);
-    fclose (yyin);
-
-    /* set filename */
-    if(error == 0) {
-      if(filename != NULL) {
+    yyrestart(f);
+    int error = yyparse((void *)dbc);
+    fclose(f);
+    if (!error) {
         dbc->filename = strdup(filename);
-      } else {
-        dbc->filename = strdup("<stdin>");
-      }
     } else {
-      dbc->filename = NULL;
+        dbc->filename = NULL;
     }
-  }
-
-  return dbc;
+    return dbc;
 }
