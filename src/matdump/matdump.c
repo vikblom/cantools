@@ -310,12 +310,6 @@ main(int argc, char **argv)
     return 1;
   }
 
-  /* print banner */
-  if(verbose_level >= 1) {
-    fprintf(stderr, "%s (%s, %s, cantools " PACKAGE_VERSION ")\n",
-            program_name, __DATE__, __TIME__);
-  }
-
   /* open mat file */
   mat = Mat_Open(mat_filename, MAT_ACC_RDONLY);
   if(NULL != mat) {
