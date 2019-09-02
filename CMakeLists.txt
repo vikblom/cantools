@@ -6,7 +6,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-#if(${CMAKE_BUILD_TYPE} STREQUAL "Sanitize")
+#if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")

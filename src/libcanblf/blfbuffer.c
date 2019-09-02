@@ -26,17 +26,16 @@ static void assertLobjNext(FILE *fp)
 
 
 // Moves source past a log container header.
-static int skipToPayload(FILE *source, size_t *zipd_size, size_t *unzipd_size)
+static int readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
 {
-    VBLObjectHeaderBaseLOGG log;
-    if (!fpeek(source, &log, sizeof(log))) {
+    if (!fpeek(source, logp, sizeof(*logp))) {
         return 0;
     }
-    assert(log.base.mObjectType == BL_OBJ_TYPE_LOG_CONTAINER);
-
-    fseek(source, sizeof(VBLObjectHeaderBaseLOGG), SEEK_CUR);
-    *zipd_size = log.base.mObjectSize - sizeof(VBLObjectHeaderBaseLOGG);
-    *unzipd_size = log.deflatebuffersize;
+    if (logp->base.mObjectType != BL_OBJ_TYPE_LOG_CONTAINER) {
+        fprintf(stderr, "Next item is not a container. Cannot add more data.\n");
+        return 0;
+    }
+    fseek(source, sizeof(*logp), SEEK_CUR);
     return 1;
 }
 
@@ -74,7 +73,8 @@ static int blfBufferRealloc(BlfBuffer *buf, size_t n_incoming)
 // Unzip data into buffer, increases buffer size.
 // The buffer must have capacity for all the new data.
 static size_t blfBufferUnzip(BlfBuffer *buf,
-                             unsigned char *zip_data, size_t zipd_size)
+                             unsigned char *zip_data,
+                             size_t zipd_size)
 {
     z_stream stream;
     stream.state = Z_NULL;
@@ -107,29 +107,45 @@ static size_t blfBufferUnzip(BlfBuffer *buf,
 // Adds more data to buffer from source file, increasing size and maybe capacity.
 static int blfBufferRefill(BlfBuffer *buf)
 {
-    // Check whats coming
-    size_t zipd_size, unzipd_size;
-    if (!skipToPayload(buf->source, &zipd_size, &unzipd_size)) {
-        //fprintf(stderr, "Next item is not a container. Cannot add more data.\n");
+    // Check whats coming and make sure there is room for it
+    VBLObjectHeaderBaseLOGG log;
+    if (!readLogHead(buf->source, &log)) {
+        return 1;
+    }
+    size_t raw_size = log.base.mObjectSize - sizeof(VBLObjectHeaderBaseLOGG);
+    size_t new_size = log.deflatebuffersize;
+    if (!blfBufferRealloc(buf, new_size)) {
         return 1;
     }
 
-    // Actually read the compressed data into memory
-    unsigned char *zipd_data = malloc(zipd_size);
-    if (!zipd_data) {
-        fprintf(stderr, "Allocating zipdata failed.\n");
+
+    unsigned char *data;
+    if (log.compressedflag == 2) {
+        data = malloc(raw_size);
+        if (!data) {
+            fprintf(stderr, "Allocating zipdata failed.\n");
+            return 1;
+        }
+    } else {
+        data = buf->buffer + (buf->position + buf->size);
+    }
+
+    size_t read = fread(data, 1, raw_size, buf->source);
+    if (read < raw_size) {
+        fprintf(stderr, "Reading from file failed.\n");
         return 1;
     }
-    fread(zipd_data, 1, zipd_size, buf->source);
 
-    // Append unzipd data
-    blfBufferRealloc(buf, unzipd_size);
-    size_t added = blfBufferUnzip(buf, zipd_data, zipd_size);
-    assert(added == unzipd_size); // Just checking...
+    if (log.compressedflag == 2) {
+        size_t added = blfBufferUnzip(buf, data, raw_size);
+        free(data);
+        assert(added == new_size); // Just checking...
+    } else {
+        buf->size += new_size;
+    }
 
     // Cleanup
-    free(zipd_data);
-    fseek(buf->source, zipd_size % 4, SEEK_CUR);
+    fseek(buf->source, raw_size % 4, SEEK_CUR);
     return 0;
 }
 
