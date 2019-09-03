@@ -47,7 +47,7 @@ blfCANMessageDump(const canMessage_t* canMessage)
 {
     uint8_t i;
 
-    printf("MSG %ld.%09ld: %d 0x%04x %d [ ",
+    printf("MSG %ld.%09u: %d 0x%04x %d [ ",
            canMessage->t.tv_sec,
            canMessage->t.tv_nsec,
            canMessage->bus,

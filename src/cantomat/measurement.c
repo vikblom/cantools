@@ -74,7 +74,7 @@ static void signalProc_print(
     char *outputSignalName =
         signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
 
-    fprintf(stderr,"   %s\t=%f ~ raw=%ld\t~ %d|%d@%d%c (%f,%f)"
+    fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)"
             " [%f|%f] %d %ul \"%s\"\n",
             outputSignalName,
             physicalValue,

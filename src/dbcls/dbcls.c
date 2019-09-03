@@ -79,7 +79,7 @@ static void show_attribute(attribute_t *a)
   }
   switch(a->value->value_type) {
   case vt_integer:
-    printf("%ld (INT)",a->value->value.int_val);
+    printf("%d (INT)",a->value->value.int_val);
     break;
   case vt_float:
     printf("%f (DOUBLE)",a->value->value.double_val);
@@ -91,7 +91,7 @@ static void show_attribute(attribute_t *a)
     printf("\"%s\" (ENUM)",a->value->value.enum_val);
     break;
   case vt_hex:
-    printf("0x%lx (HEX)",a->value->value.hex_val);
+    printf("0x%X (HEX)",a->value->value.hex_val);
     break;
   default:
     printf(" (UNKNOWN)");
@@ -121,7 +121,7 @@ static void show_attribute_list(attribute_list_t *al)
 static void show_val_map(val_map_t *vm)
 {
   for(; vm!=NULL; vm=vm->next) {
-    printf("%lu=\"%s\"", vm->val_map_entry->index, vm->val_map_entry->value);
+    printf("%u=\"%s\"", vm->val_map_entry->index, vm->val_map_entry->value);
     if(vm->next != NULL) putchar(',');
   }
 }
@@ -193,7 +193,7 @@ static void show_signal(signal_list_t *sl)
 {
   printf("%s;"       /* signal name */
          "%s;"       /* mux type */
-         "%ld;"      /* mux value */
+         "%u;"      /* mux value */
          "%d;"       /* bit start */
          "%d;"       /* bit len */
          "%d;"       /* endianess */
@@ -237,7 +237,7 @@ static void show_string(string_t string)
 
 static void show_message(message_list_t *ml)
 {
-  printf("$%lX;"     /* message id */
+  printf("0x%X;"     /* message id */
          "%s;"       /* message name */
          "%d;"       /* message len */
          "%s"       /* sender */
@@ -313,7 +313,7 @@ static void show_envvars(envvar_list_t *envvar_list)
       "READWRITE",
     };
 
-    printf("\"%s\";%s;%s;%ld;%ld;\"%s\";%ld;%ld;",
+    printf("\"%s\";%s;%s;%u;%u;\"%s\";%u;%u;",
            el->envvar->name,
            string_from_et[(int)el->envvar->envtype],
            string_from_at[(int)el->envvar->access],

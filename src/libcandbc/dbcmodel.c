@@ -22,7 +22,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
 void trace(char *str)
 {
-    fprintf(stderr,str);
+    fprintf(stderr, "%s\n", str);
 }
 
 /****************
@@ -230,149 +230,149 @@ void dbc_free(dbc_t *dbc)
 
 
 /*********************
-* COPY CONSTRUCTORS *
-*********************/
-    string_t string_dup(string_t orig)
-    {
-        if(orig != NULL) {
-            return strdup(orig);
-        } else {
-            return NULL;
-        }
+ * COPY CONSTRUCTORS *
+ *********************/
+string_t string_dup(string_t orig)
+{
+    if(orig != NULL) {
+        return strdup(orig);
+    } else {
+        return NULL;
     }
+}
 
-    attribute_value_t * attribute_value_dup(attribute_value_t *orig)
-    {
-        if(orig != NULL) {
-            CREATE(attribute_value_t, copy);
-            copy->value_type = orig->value_type;
-            switch(orig->value_type) {
-            case vt_integer:
-                copy->value.int_val    = orig->value.int_val;
-                break;
-            case vt_float:
-                copy->value.double_val = orig->value.double_val;
-                break;
-            case vt_string:
-                copy->value.string_val = string_dup(orig->value.string_val);
-                break;
-            case vt_enum:
-                copy->value.enum_val   = string_dup(orig->value.enum_val);
-                break;
-            case vt_hex:
-                copy->value.hex_val    = orig->value.hex_val;
-                break;
-            }
-            return copy;
-        } else {
-            return NULL;
+attribute_value_t * attribute_value_dup(attribute_value_t *orig)
+{
+    if(orig != NULL) {
+        CREATE(attribute_value_t, copy);
+        copy->value_type = orig->value_type;
+        switch(orig->value_type) {
+        case vt_integer:
+            copy->value.int_val    = orig->value.int_val;
+            break;
+        case vt_float:
+            copy->value.double_val = orig->value.double_val;
+            break;
+        case vt_string:
+            copy->value.string_val = string_dup(orig->value.string_val);
+            break;
+        case vt_enum:
+            copy->value.enum_val   = string_dup(orig->value.enum_val);
+            break;
+        case vt_hex:
+            copy->value.hex_val    = orig->value.hex_val;
+            break;
         }
+        return copy;
+    } else {
+        return NULL;
     }
+}
 
-    attribute_t * attribute_dup(attribute_t *orig)
-    {
-        if(orig != NULL) {
-            CREATE(attribute_t, copy);
-            copy->name   = string_dup(orig->name);
-            copy->value  = attribute_value_dup(orig->value);
-            return copy;
-        } else {
-            return NULL;
-        }
+attribute_t * attribute_dup(attribute_t *orig)
+{
+    if(orig != NULL) {
+        CREATE(attribute_t, copy);
+        copy->name   = string_dup(orig->name);
+        copy->value  = attribute_value_dup(orig->value);
+        return copy;
+    } else {
+        return NULL;
     }
+}
 
-    DEFINE_PLIST_DUP(attribute_list, attribute)
+DEFINE_PLIST_DUP(attribute_list, attribute)
 
-        DEFINE_PLIST_DUP(string_list, string)
+    DEFINE_PLIST_DUP(string_list, string)
 
-        val_map_entry_t *val_map_entry_dup(val_map_entry_t *orig)
-    {
-        if(orig != NULL) {
-            CREATE(val_map_entry_t, copy);
-            copy->index = orig->index;
-            copy->value = string_dup(orig->value);
-            return copy;
-        } else {
-            return NULL;
-        }
+    val_map_entry_t *val_map_entry_dup(val_map_entry_t *orig)
+{
+    if(orig != NULL) {
+        CREATE(val_map_entry_t, copy);
+        copy->index = orig->index;
+        copy->value = string_dup(orig->value);
+        return copy;
+    } else {
+        return NULL;
     }
+}
 
-    DEFINE_PLIST_DUP(val_map, val_map_entry);
+DEFINE_PLIST_DUP(val_map, val_map_entry);
 
-    signal_t *signal_dup(signal_t *orig)
-    {
-        if(orig != NULL) {
-            CREATE(signal_t, copy);
-            copy->name            = string_dup(orig->name);
-            copy->mux_type        = orig->mux_type;
-            copy->mux_value       = orig->mux_value;
-            copy->bit_start       = orig->bit_start;
-            copy->bit_len         = orig->bit_len;
-            copy->endianess       = orig->endianess;
-            copy->signedness      = orig->signedness;
-            copy->scale           = orig->scale;
-            copy->offset          = orig->offset;
-            copy->min             = orig->min;
-            copy->max             = orig->max;
-            copy->signal_val_type = orig->signal_val_type;
-            copy->unit            = string_dup(orig->unit);
-            copy->receiver_list   = string_list_dup(orig->receiver_list);
-            copy->comment         = string_dup(orig->comment);
-            copy->attribute_list  = attribute_list_dup(orig->attribute_list);
-            copy->val_map         = val_map_dup(orig->val_map);
-            return copy;
-        } else {
-            return NULL;
-        }
+signal_t *signal_dup(signal_t *orig)
+{
+    if(orig != NULL) {
+        CREATE(signal_t, copy);
+        copy->name            = string_dup(orig->name);
+        copy->mux_type        = orig->mux_type;
+        copy->mux_value       = orig->mux_value;
+        copy->bit_start       = orig->bit_start;
+        copy->bit_len         = orig->bit_len;
+        copy->endianess       = orig->endianess;
+        copy->signedness      = orig->signedness;
+        copy->scale           = orig->scale;
+        copy->offset          = orig->offset;
+        copy->min             = orig->min;
+        copy->max             = orig->max;
+        copy->signal_val_type = orig->signal_val_type;
+        copy->unit            = string_dup(orig->unit);
+        copy->receiver_list   = string_list_dup(orig->receiver_list);
+        copy->comment         = string_dup(orig->comment);
+        copy->attribute_list  = attribute_list_dup(orig->attribute_list);
+        copy->val_map         = val_map_dup(orig->val_map);
+        return copy;
+    } else {
+        return NULL;
     }
+}
 
-    DEFINE_PLIST_DUP(signal_list, signal)
+DEFINE_PLIST_DUP(signal_list, signal)
 
-        message_t *message_dup(message_t *orig)
-    {
-        if(orig != NULL) {
-            CREATE(message_t, copy);
-            copy->id               = orig->id;
-            copy->name             = string_dup(orig->name);
-            copy->sender           = string_dup(orig->sender);
-            copy->signal_list      = signal_list_dup(orig->signal_list);
-            copy->comment          = string_dup(orig->comment);
-            copy->attribute_list   = attribute_list_dup(orig->attribute_list);
-            copy->transmitter_list = string_list_dup(orig->transmitter_list);
-            return copy;
-        } else {
-            return NULL;
-        }
+    message_t *message_dup(message_t *orig)
+{
+    if(orig != NULL) {
+        CREATE(message_t, copy);
+        copy->id               = orig->id;
+        copy->name             = string_dup(orig->name);
+        copy->sender           = string_dup(orig->sender);
+        copy->signal_list      = signal_list_dup(orig->signal_list);
+        copy->comment          = string_dup(orig->comment);
+        copy->attribute_list   = attribute_list_dup(orig->attribute_list);
+        copy->transmitter_list = string_list_dup(orig->transmitter_list);
+        return copy;
+    } else {
+        return NULL;
     }
+}
 
 /*
  * merge input strings and frees their memory.
  */
-    char *string_merge(char *in, char *app)
-    {
-        char *ret;
+char *string_merge(char *in, char *app)
+{
+    char *ret;
 
-        if(app != NULL) {
-            if(in != NULL) {
-                char *dp = malloc(strlen(in) + strlen(app) + 1);
-                char *sp;
+    if(app != NULL) {
+        if(in != NULL) {
+            char *dp = malloc(strlen(in) + strlen(app) + 1);
+            char *sp;
 
-                ret = dp;
-                for(sp = in;  *sp  != '\0'; sp++,dp++) *dp = *sp;
-                for(sp = app; *sp  != '\0'; sp++,dp++) *dp = *sp;
-                *dp = '\0';
-                free(in);
-                free(app);
-            } else {
-                ret = app;
-            }
+            ret = dp;
+            for(sp = in;  *sp  != '\0'; sp++,dp++) *dp = *sp;
+            for(sp = app; *sp  != '\0'; sp++,dp++) *dp = *sp;
+            *dp = '\0';
+            free(in);
+            free(app);
         } else {
-            if(in != NULL) {
-                ret = in;
-            } else {
-                ret = NULL;
-            }
+            ret = app;
         }
-
-        return ret;
+    } else {
+        if(in != NULL) {
+            ret = in;
+        } else {
+            ret = NULL;
+        }
     }
+
+    return ret;
+}
