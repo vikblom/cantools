@@ -18,10 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-#include <stdio.h>
 #include <stdint.h>
-#include <time.h>
-#include "dbctypes.h"
 #include "cantomat.h"
 
 /*
@@ -38,40 +35,39 @@ typedef struct {
 } vsb_header_t;
 
 typedef struct {
-  /*
-   * see www.intrepidcs.com/support/ICSDocumentation/neoAPILinux/StatusBitfields.htm
-   */
-  uint32_t StatusBitField;
-  uint32_t StatusBitField2;
-  uint32_t TimeHardware;
-  uint32_t TimeHardware2;
-  uint32_t TimeSystem;
-  uint32_t TimeSystem2;
-  uint8_t  TimeStampHardwareID;
-  uint8_t  TimeStampSystemID;
-  uint8_t  NetworkID;
-  uint8_t  NodeID;
-  uint8_t  Protocol;
-  uint8_t  MessagePieceID;
-  uint8_t  ExtraDataPtrEnabled;
-  uint8_t  NumberBytesHeader;
-  uint8_t  NumberBytesData;
-  int16_t  DescriptionID;
-  int32_t  ArbIDOrHeader;
-  uint8_t  Data[8];
-  uint8_t  AckBytes[8];
-  float    ExtraDataPtr;
-  uint8_t  MiscData;
+    /*
+     * see www.intrepidcs.com/support/ICSDocumentation/neoAPILinux/StatusBitfields.htm
+     */
+    uint32_t StatusBitField;
+    uint32_t StatusBitField2;
+    uint32_t TimeHardware;
+    uint32_t TimeHardware2;
+    uint32_t TimeSystem;
+    uint32_t TimeSystem2;
+    uint8_t  TimeStampHardwareID;
+    uint8_t  TimeStampSystemID;
+    uint8_t  NetworkID;
+    uint8_t  NodeID;
+    uint8_t  Protocol;
+    uint8_t  MessagePieceID;
+    uint8_t  ExtraDataPtrEnabled;
+    uint8_t  NumberBytesHeader;
+    uint8_t  NumberBytesData;
+    int16_t  DescriptionID;
+    int32_t  ArbIDOrHeader;
+    uint8_t  Data[8];
+    uint8_t  AckBytes[8];
+    float    ExtraDataPtr;
+    uint8_t  MiscData;
 } icsSpyMessage_t;
 
-typedef struct
-{
-  uint32_t SystemTimeStampID;
-  uint32_t SystemTime1;
-  uint32_t SystemTime2;
-  uint32_t HardwareTimeStampID;
-  uint32_t HardwareTime1;
-  uint32_t HardwareTime2;
+typedef struct {
+    uint32_t SystemTimeStampID;
+    uint32_t SystemTime1;
+    uint32_t SystemTime2;
+    uint32_t HardwareTimeStampID;
+    uint32_t HardwareTime1;
+    uint32_t HardwareTime2;
 } icsSpyMsgTime;
 
 #ifdef __cplusplus

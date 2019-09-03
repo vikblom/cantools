@@ -94,7 +94,7 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     for(i = 0; i < message.dlc; i++) {
       message.byte_arr[i] = msg.Data[i];
     }
-    message.id = (uint32)msg.ArbIDOrHeader;
+    message.id = (uint32_t)msg.ArbIDOrHeader;
 
     busmap[message.bus] = 1;
 
