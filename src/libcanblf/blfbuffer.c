@@ -45,19 +45,20 @@ static int blfBufferRealloc(BlfBuffer *buf, size_t n_incoming)
 {
     size_t n_free = buf->capacity - (buf->position + buf->size);
     if (n_incoming <= n_free) {
-        return 0;
+        return 1;
     }
 
+    // Shift down to start
     if (buf->position) {
         size_t i;
         for (i = 0; i < buf->size; ++i) {
             buf->buffer[i] = buf->buffer[buf->position + i];
         }
         buf->position = 0;
+    }
 
-        if (n_incoming <= buf->capacity - buf->size) {
-            return 0;
-        }
+    if (n_incoming <= buf->capacity - buf->size) {
+        return 1;
     }
 
     buf->buffer = realloc(buf->buffer, buf->size + n_incoming);
@@ -110,11 +111,13 @@ static int blfBufferRefill(BlfBuffer *buf)
     // Check whats coming and make sure there is room for it
     VBLObjectHeaderBaseLOGG log;
     if (!readLogHead(buf->source, &log)) {
+        //fprintf(stderr, "readLogHead failed.\n");
         return 1;
     }
     size_t raw_size = log.base.mObjectSize - sizeof(VBLObjectHeaderBaseLOGG);
     size_t new_size = log.deflatebuffersize;
     if (!blfBufferRealloc(buf, new_size)) {
+        fprintf(stderr, "Buffer realloc failed.\n");
         return 1;
     }
 
@@ -141,7 +144,7 @@ static int blfBufferRefill(BlfBuffer *buf)
         free(data);
         assert(added == new_size); // Just checking...
     } else {
-        buf->size += new_size;
+        buf->size += raw_size;
     }
 
     // Cleanup
