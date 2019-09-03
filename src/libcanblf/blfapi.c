@@ -16,18 +16,138 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include <assert.h>
 #include "blfapi.h"
-#include "blfparser.c"
 #include "blfbuffer.h"
 
+#define BLHANDLE_MAGIC 0x01234567
 #define BLFMIN(x,y) ((x)<(y)?(x):(y))
+
+
+/* initialize SYSTEMTIME structure */
+static void
+blfSystemTimeInit(SYSTEMTIME *const s)
+{
+    s->wYear = 0;
+    s->wMonth = 0;
+    s->wDayOfWeek = 0;
+    s->wDay = 0;
+    s->wHour = 0;
+    s->wMinute = 0;
+    s->wSecond = 0;
+    s->wMilliseconds = 0;
+}
+
+
+/* initialize VBLFileStatisticsEx structure */
+static void
+blfStatisticsInit(VBLFileStatisticsEx *const s)
+{
+    s->mStatisticsSize = 0x88u;
+    s->mApplicationID = 0;
+    s->mApplicationMajor = 0;
+    s->mApplicationMinor = 0;
+    s->mApplicationBuild = 0;
+    s->mFileSize = 0;
+    s->mUncompressedFileSize = 0;
+    s->mObjectCount = 0;
+    s->mObjectsRead = 0;
+
+    blfSystemTimeInit(&s->mMeasurementStartTime);
+    blfSystemTimeInit(&s->mLastObjectTime);
+
+    assert(sizeof(s->mReserved) == 0x48);
+    memset(s->mReserved, 0, sizeof(s->mReserved));
+}
+
+
+/* initialize LOGG structure */
+static void
+blfLOGGInit(LOGG l)
+{
+    l->mSignature = 0;
+    l->mHeaderSize = 0;
+    l->mCRC = 0;
+    l->appID = 0;
+    l->dwCompression = 0;
+    l->appMajor = 0;
+    l->appMinor = 0;
+    l->fileSize = 0;
+    l->uncompressedFileSize = 0;
+    l->objectCount = 0;
+    l->appBuild = 0;
+
+    blfSystemTimeInit(&l->mMeasurementStartTime);
+    blfSystemTimeInit(&l->mMeasurementEndTime);
+}
+
+/* debug: dump VBLObjectHeaderBase structure */
+/*
+static void
+blfHeaderBaseDump(VBLObjectHeaderBase *b)
+{
+  printf("header.base.mSignature = %c%c%c%c\n",
+  ((uint8_t *)&b->mSignature)[0],
+  ((uint8_t *)&b->mSignature)[1],
+  ((uint8_t *)&b->mSignature)[2],
+  ((uint8_t *)&b->mSignature)[3]);
+  printf("header.base.mHeaderSize    = %d\n",b->mHeaderSize);
+  printf("header.base.mHeaderVersion = %d\n",b->mHeaderVersion);
+}
+*/
+
+
+/* fill VBLFileStatisticsEx structure from LOGG structure */
+static void
+blfStatisticsFromLOGG(VBLFileStatisticsEx *const s, const LOGG_t *const l)
+{
+    s->mApplicationID        = l->appID;
+    s->mApplicationMajor     = l->appMajor;
+    s->mApplicationMinor     = l->appMinor;
+    s->mFileSize             = l->fileSize;
+    s->mUncompressedFileSize = l->uncompressedFileSize;
+    s->mObjectCount          = l->objectCount;
+    s->mApplicationBuild     = l->appBuild;
+    s->mMeasurementStartTime = l->mMeasurementStartTime;
+    s->mLastObjectTime       = l->mMeasurementEndTime;
+}
+
+
+/* diagnose structure sizes to ensure that we can fread into them */
+static void
+blfAssertStructures(void)
+{
+    assert(sizeof(VBLObjectHeaderBaseLOGG) == 32);
+    assert(sizeof(LOGG_t) == 144);
+    assert(sizeof(VBLObjectHeaderBase) == 16);
+    assert(sizeof(VBLObjectHeader) == 32);
+    assert(sizeof(VBLObjectHeaderBaseLOGG) == 32);
+    assert(sizeof(VBLCANMessage) == 48);
+    assert(sizeof(VBLFileStatisticsEx) == 136);
+}
+
+
+/* check, if BLFHANDLE is initialized */
+static success_t
+blfHandleIsInitialized(BLFHANDLE h)
+{
+    return (h!=NULL) && (h->magic == BLHANDLE_MAGIC);
+}
+
+
+/* copy VBLObjectHeaderBase */
+static void
+blfVBLObjectHeaderBaseCopy(VBLObjectHeaderBase *const dest,
+                           const VBLObjectHeaderBase *const source)
+{
+    *dest = *source;
+}
+
 
 /* open a BLF file for reading */
 BLFHANDLE
 blfCreateFile(FILE *fp)
 {
-    blfAssertEndian();
     blfAssertStructures();
 
     BLFHANDLE h = malloc(sizeof(*h));
@@ -53,6 +173,7 @@ fail:
     return NULL;
 }
 
+
 /* close BLFHANDLE */
 success_t
 blfCloseHandle(BLFHANDLE h)
@@ -63,6 +184,7 @@ blfCloseHandle(BLFHANDLE h)
     free(h);
     return 1;
 }
+
 
 /* retrieve VBLFileStatisticsEx data */
 success_t
@@ -83,6 +205,7 @@ fail:
     return 0;
 }
 
+
 /* skip next object */
 success_t
 blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
@@ -96,6 +219,7 @@ blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
     return success;
 }
 
+
 /* read object header base of next object */
 success_t
 blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
@@ -105,6 +229,7 @@ blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
     return !blfBufferPeek(&h->mBuffer, pBase, sizeof(*pBase));
     // TODO: Sanity check the signature?
 }
+
 
 /* read next object */
 success_t
@@ -117,9 +242,11 @@ blfReadObject(BLFHANDLE h, VBLObjectHeaderBase *pBase)
     return success;
 }
 
+
 /* read next object into size-limited memory */
 success_t
-blfReadObjectSecure(BLFHANDLE h, VBLObjectHeaderBase* pBase,
+blfReadObjectSecure(BLFHANDLE h,
+                    VBLObjectHeaderBase* pBase,
                     size_t expectedSize)
 {
     if (!blfHandleIsInitialized(h) || pBase == NULL)
@@ -133,7 +260,8 @@ blfReadObjectSecure(BLFHANDLE h, VBLObjectHeaderBase* pBase,
                     "with size %u failed.",(uint32_t)pBase->mObjectSize);
             return 0;
         }
-        blfVBLObjectHeaderBaseCopy(obj, pBase);
+        *obj = *pBase;
+
         if(!blfReadObject(h, obj)) {
             free(obj);
             return 0;
@@ -148,12 +276,13 @@ blfReadObjectSecure(BLFHANDLE h, VBLObjectHeaderBase* pBase,
 
         /* less bytes read than expected? -> clear remaining bytes */
         if (pBase->mObjectSize < expectedSize) {
-            blfMemZero((uint8_t *)pBase + pBase->mObjectSize,
-                       expectedSize - (size_t)pBase->mObjectSize);
+            memset(pBase + pBase->mObjectSize, 0,
+                   expectedSize - (size_t)pBase->mObjectSize);
         }
     }
     return 1;
 }
+
 
 /* free object data */
 success_t
