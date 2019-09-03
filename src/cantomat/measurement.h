@@ -19,24 +19,11 @@
 
 #include <stdio.h>
 
+#include "cantomat.h"
 #include "hashtable.h"
 #include "busassignment.h"
 #include "signalformat.h"
 
-/* CAN message type */
-typedef struct {
-    struct {
-        time_t tv_sec;
-        uint32 tv_nsec;
-    } t; /* time stamp */
-    uint8   bus;     /* can bus */
-    uint32  id;      /* numeric CAN-ID */
-    uint8   dlc;
-    uint8   byte_arr[8];
-} canMessage_t;
-
-/* message received callback function */
-typedef void (* msgRxCb_t)(canMessage_t *message, void *cbData);
 
 typedef struct {
     struct hashtable *timeSeriesHash;

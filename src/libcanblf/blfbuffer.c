@@ -26,7 +26,7 @@ static void assertLobjNext(FILE *fp)
 
 
 // Moves source past a log container header.
-static int readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
+static success_t readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
 {
     if (!fpeek(source, logp, sizeof(*logp))) {
         return 0;

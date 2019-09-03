@@ -18,9 +18,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "dbctypes.h"
+#include "cantomat.h"
 #include "blfapi.h"
-#include "measurement.h"
 
 extern int verbose_flag;
 extern int debug_flag;
@@ -72,7 +71,7 @@ blfCANMessageFromVBLCANMessage(canMessage_t* canMessage,
 
 static void
 blfVBLCANMessageParseTime(const VBLCANMessage* message, time_t *sec,
-                          uint32 *nsec)
+                          uint32_t *nsec)
 {
     const uint64_t C_1E9  = 1000000000ULL;
     const uint64_t C_1E5  =     100000ULL;

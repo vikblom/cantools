@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <time.h>
 #include "dbctypes.h"
-#include "measurement.h"
+#include "cantomat.h"
 
 typedef struct {
   uint8_t  log_time_array[4];   /* time */

@@ -20,8 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "dbctypes.h"
-#include "measurement.h"
+#include "cantomat.h"
 
 #ifdef __cplusplus
 extern "C" {
