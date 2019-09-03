@@ -119,6 +119,19 @@ void canMessage_decode(message_t      *dbcMessage,
                 fprintf(stderr, "WARNING: Signed signales not yet verified!\n");
                 sign_warned = 1;
             }
+
+            /*
+            printf("   raw: 0x%08X\n", raw);
+            uint32_t sign_mask = 1UL << (bitlen-1);
+            printf(" smask: 0x%08X\n", sign_mask);
+            printf("  sign: %d\n", (raw & sign_mask) > 0);
+
+            uint32_t abs = raw & ~sign_mask;
+            printf("   abs: %u\n", abs);
+            int32_t s = (raw & sign_mask) ? -abs : abs;
+            printf("signed: %d\n", s);
+            */
+
             uint64_t sign_mask = 1ULL << (s->bit_len-1);
             rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
         }
