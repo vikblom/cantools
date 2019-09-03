@@ -96,6 +96,7 @@ void canMessage_decode(message_t      *dbcMessage,
                        signalProcCb_t  signalProcCb,
                        void           *cbData)
 {
+    static int sign_warned = 0;
     uint64_t sec = canMessage->t.tv_sec;
     int64_t nsec = canMessage->t.tv_nsec;
 
@@ -114,7 +115,10 @@ void canMessage_decode(message_t      *dbcMessage,
 
         /* perform sign extension */
         if (s->signedness && (s->bit_len < 64)) {
-            fprintf(stderr, "WARNING: Signed signales not yet verified!\n");
+            if (!sign_warned) {
+                fprintf(stderr, "WARNING: Signed signales not yet verified!\n");
+                sign_warned = 1;
+            }
             uint64_t sign_mask = 1ULL << (s->bit_len-1);
             rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
         }
