@@ -49,14 +49,16 @@
  * I.e. the value as it is transmitted over the network.
  */
 uint64 extract_raw_signal(const signal_t *const s,
-                          const uint8 *const msgpayload)
+                          const uint8 *const msgpayload,
+                          const size_t dlc)
 {
+    //fprintf(stderr, "New signal\n");
 
-    uint64 raw_value = 0;
+    uint64 raw_value = 0ULL;
     unsigned char *p = (unsigned char *) &raw_value;
-    uint8 i;
     // endianess 1 is little, 0 is big
-    for (i = 0; i < 8; i++) {
+    size_t i;
+    for (i = 0; i < dlc; i++) {
         p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
         //fprintf(stderr, "%02X ", p[i]);
     }
@@ -70,11 +72,11 @@ uint64 extract_raw_signal(const signal_t *const s,
         start -= s->bit_len - 1;
     }
 
-    //fprintf(stderr, "orig: 0x%16llX\n", raw_value);
+    //fprintf(stderr, "orig: 0x%016llX\n", raw_value);
     //fprintf(stderr, "%u %u\n", start, s->bit_len);
 
     // We cannot handle these signals.
-    if (start > 63) {
+    if (start < 0 || start > 63) {
         // TODO: This should propagate to maybe not even passing on signal?
         //fprintf(stderr, "WARNING: Start bit out of bounds, skipping!\n");
         return 0;
@@ -85,7 +87,7 @@ uint64 extract_raw_signal(const signal_t *const s,
     if (s->bit_len < 64) {
         raw_value &= ((1ULL << s->bit_len) - 1);
     }
-    //fprintf(stderr, "mask: 0x%016llX\n", raw_value);
+    //fprintf(stderr, "final: 0x%016llX\n", raw_value);
     return raw_value;
 }
 
@@ -96,7 +98,9 @@ void canMessage_decode(message_t      *dbcMessage,
                        signalProcCb_t  signalProcCb,
                        void           *cbData)
 {
-    static int sign_warned = 0;
+    static int bitlen_warned = 0;
+    static int floats_warned = 0;
+
     uint64_t sec = canMessage->t.tv_sec;
     int64_t nsec = canMessage->t.tv_nsec;
 
@@ -111,40 +115,44 @@ void canMessage_decode(message_t      *dbcMessage,
     for(sl = dbcMessage->signal_list; sl != NULL; sl = sl->next) {
 
         const signal_t *const s = sl->signal;
-        uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr);
 
-        /* perform sign extension */
-        if (s->signedness && (s->bit_len < 64)) {
-            if (!sign_warned) {
-                fprintf(stderr, "WARNING: Signed signales not yet verified!\n");
-                sign_warned = 1;
+        if (s->bit_len > 64) {
+            if (!bitlen_warned) {
+                fprintf(stderr, "WARNING: Bit length above 64 not yet implemented! Signals skipped.\n");
+                bitlen_warned = 1;
             }
-
-            /*
-            printf("   raw: 0x%08X\n", raw);
-            uint32_t sign_mask = 1UL << (bitlen-1);
-            printf(" smask: 0x%08X\n", sign_mask);
-            printf("  sign: %d\n", (raw & sign_mask) > 0);
-
-            uint32_t abs = raw & ~sign_mask;
-            printf("   abs: %u\n", abs);
-            int32_t s = (raw & sign_mask) ? -abs : abs;
-            printf("signed: %d\n", s);
-            */
-
-            uint64_t sign_mask = 1ULL << (s->bit_len-1);
-            rawValue = ((int64_t) rawValue ^ sign_mask) - sign_mask;
+            // No way of dealing with these signals right now.
+            continue;
         }
 
         if (s->signal_val_type != svt_integer) {
-            fprintf(stderr, "WARNING: Float and double not implemented yet!\n");
-            return;
+            if (!floats_warned) {
+                fprintf(stderr,
+                        "WARNING: Float and double not implemented yet! Signals skipped.\n");
+                floats_warned = 1;
+            }
+            continue;
         }
+
+        uint64 rawValue = extract_raw_signal(s,
+                                             canMessage->byte_arr,
+                                             canMessage->dlc);
 
         // [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
         double physicalValue;
         if (s->signedness) {
-            physicalValue = (double) (int64_t) rawValue * s->scale + s->offset;
+            int64_t signedValue;
+            if (rawValue & (1ULL << (s->bit_len-1))) {
+                rawValue = ~rawValue + 1;
+                if (s->bit_len < 8*sizeof(rawValue)) {
+                    rawValue &= (1ULL << s->bit_len) - 1;
+                }
+                signedValue = -((int64_t)rawValue);
+            } else {
+                signedValue = rawValue;
+            }
+
+            physicalValue = signedValue * s->scale + s->offset;
         } else {
             physicalValue = (double) rawValue * s->scale + s->offset;
         }
