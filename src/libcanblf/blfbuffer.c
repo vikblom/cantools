@@ -4,29 +4,34 @@
 #include <assert.h>
 #include <zlib.h>
 
-#include "blfbuffer.h"
 #include "blfapi.h"
-
+#include "blfbuffer.h"
 
 static int fpeek(FILE* fp, void *dest, size_t bytes)
 {
     long before = ftell(fp);
-    size_t ret = fread(dest, bytes, 1, fp);
-    fseek(fp, before, SEEK_SET);
-    return ret;
+    if (before == -1)
+        return 0;
+
+    size_t ret = fread(dest, 1, bytes, fp);
+
+    if (fseek(fp, before, SEEK_SET) != 0)
+        return 0;
+
+    return ret == bytes;
 }
 
 
-static void assertLobjNext(FILE *fp)
+static int isLobjNext(FILE *fp)
 {
     char tmp[4];
     fpeek(fp, &tmp, 4);
-    assert(tmp[0] == 'L' || tmp[1] == 'O' || tmp[2] == 'B' || tmp[3] == 'J');
+    return tmp[0] == 'L' || tmp[1] == 'O' || tmp[2] == 'B' || tmp[3] == 'J';
 }
 
 
 // Moves source past a log container header.
-static success_t readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
+static int readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
 {
     if (!fpeek(source, logp, sizeof(*logp))) {
         return 0;
@@ -35,8 +40,7 @@ static success_t readLogHead(FILE *source, VBLObjectHeaderBaseLOGG *logp)
         fprintf(stderr, "Next item is not a container. Cannot add more data.\n");
         return 0;
     }
-    fseek(source, sizeof(*logp), SEEK_CUR);
-    return 1;
+    return fseek(source, sizeof(*logp), SEEK_CUR) == 0;
 }
 
 
@@ -112,13 +116,13 @@ static int blfBufferRefill(BlfBuffer *buf)
     VBLObjectHeaderBaseLOGG log;
     if (!readLogHead(buf->source, &log)) {
         //fprintf(stderr, "readLogHead failed.\n");
-        return 1;
+        return 0;
     }
     size_t raw_size = log.base.mObjectSize - sizeof(VBLObjectHeaderBaseLOGG);
     size_t new_size = log.deflatebuffersize;
     if (!blfBufferRealloc(buf, new_size)) {
         fprintf(stderr, "Buffer realloc failed.\n");
-        return 1;
+        return 0;
     }
 
 
@@ -127,7 +131,7 @@ static int blfBufferRefill(BlfBuffer *buf)
         data = malloc(raw_size);
         if (!data) {
             fprintf(stderr, "Allocating zipdata failed.\n");
-            return 1;
+            return 0;
         }
     } else {
         data = buf->buffer + (buf->position + buf->size);
@@ -136,7 +140,7 @@ static int blfBufferRefill(BlfBuffer *buf)
     size_t read = fread(data, 1, raw_size, buf->source);
     if (read < raw_size) {
         fprintf(stderr, "Reading from file failed.\n");
-        return 1;
+        return 0;
     }
 
     if (log.compressedflag == 2) {
@@ -148,45 +152,42 @@ static int blfBufferRefill(BlfBuffer *buf)
     }
 
     // Cleanup
-    fseek(buf->source, raw_size % 4, SEEK_CUR);
-    return 0;
+    return fseek(buf->source, raw_size % 4, SEEK_CUR) == 0;
 }
 
 
 int blfBufferPeek(BlfBuffer *buf, void *dest, size_t n)
 {
     while (buf->size < n) {
-        if (blfBufferRefill(buf)) {
-            //fprintf(stderr, "Refill failed\n");
-            return 1;
+        if (!blfBufferRefill(buf)) {
+            return 0;
         }
     }
     memcpy(dest, buf->buffer + buf->position, n);
-    return 0;
+    return 1;
 }
 
 int blfBufferSkip(BlfBuffer *buf, size_t n)
 {
     n += n % 4; // Include alignment padding
     while (buf->size < n) {
-        if (blfBufferRefill(buf)) {
+        if (!blfBufferRefill(buf)) {
             fprintf(stderr, "Refill failed\n");
-            return 1;
+            return 0;
         }
     }
     buf->position += n;
     buf->size -= n;
-    return 0;
+    return 1;
 }
 
 
 int blfBufferRead(BlfBuffer *buf, void *dest, size_t n)
 {
-    if (blfBufferPeek(buf, dest, n)) {
-        return 1;
-    }
+    if (!blfBufferPeek(buf, dest, n))
+        return 0;
     blfBufferSkip(buf, n);
-    return 0;
+    return 1;
 }
 
 
@@ -197,12 +198,14 @@ int blfBufferCreate(BlfBuffer *buf, FILE *file)
         return 0;
     }
     // TODO: If we dont start at an object, seek until we get one?
-    assertLobjNext(file);
+    if (!isLobjNext(file))
+        return 0;
 
     buf->source = file;
     buf->buffer = malloc(1024);
     if (!buf->buffer) {
         fprintf(stderr, "Allocating BlfBuffer failed.\n");
+        return 0;
     }
     buf->capacity = 1024;
     buf->position = 0;
@@ -237,8 +240,8 @@ static void summarizeBlf(FILE *fp)
     size_t total = 0;
     size_t counts[256] = {0};
     VBLObjectHeaderBase base;
-    while (!blfBufferPeek(&buf, &base, sizeof(base))) {
-        if (blfBufferSkip(&buf, base.mObjectSize))
+    while (blfBufferPeek(&buf, &base, sizeof(base))) {
+        if (!blfBufferSkip(&buf, base.mObjectSize))
             break;
         //printf("Object id %d\n", base.mObjectType);
         counts[base.mObjectType < 256 ? base.mObjectType : 0]++;

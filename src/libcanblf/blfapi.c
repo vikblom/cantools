@@ -164,9 +164,10 @@ blfCreateFile(FILE *fp)
     blfStatisticsFromLOGG(&h->mStatistics, &h->mLOGG);
 
     // TODO: We should peek and check that this is the start.
-    blfBufferCreate(&h->mBuffer, fp);
-    return h;
+    if (!blfBufferCreate(&h->mBuffer, fp))
+        goto fail;
 
+    return h;
 fail:
     if(h != NULL) free(h);
     fprintf(stderr,"blfCreateFile() failed\n");
@@ -212,10 +213,9 @@ blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
     if (!blfHandleIsInitialized(h) || pBase == NULL)
         return 0;
-    success_t success = !blfBufferSkip(&h->mBuffer, pBase->mObjectSize);
-    if (success) {
+    success_t success = blfBufferSkip(&h->mBuffer, pBase->mObjectSize);
+    if (success)
         h->mStatistics.mObjectsRead++;
-    }
     return success;
 }
 
@@ -226,8 +226,7 @@ blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
     if (!blfHandleIsInitialized(h) || pBase == NULL)
         return 0;
-    return !blfBufferPeek(&h->mBuffer, pBase, sizeof(*pBase));
-    // TODO: Sanity check the signature?
+    return blfBufferPeek(&h->mBuffer, pBase, sizeof(*pBase));
 }
 
 
@@ -235,10 +234,9 @@ blfPeekObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 success_t
 blfReadObject(BLFHANDLE h, VBLObjectHeaderBase *pBase)
 {
-    success_t success = !blfBufferRead(&h->mBuffer, pBase, pBase->mObjectSize);
-    if(success) {
+    success_t success = blfBufferRead(&h->mBuffer, pBase, pBase->mObjectSize);
+    if(success)
         h->mStatistics.mObjectsRead++;
-    }
     return success;
 }
 
