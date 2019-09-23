@@ -101,6 +101,8 @@ blfVBLCANMessageParseTime(const VBLCANMessage* message, time_t *sec,
  */
 void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
 {
+    static int big_dlc_warned = 0;
+
     VBLObjectHeaderBase base;
     VBLCANMessage message;
     VBLFileStatisticsEx statistics = { sizeof(statistics) };
@@ -110,7 +112,7 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
 
     /* get header */
     h = blfCreateFile(fp);
-    if(h == NULL) {
+    if (h == NULL) {
         fprintf(stderr, "blfReader_processFile: cannot open file\n");
         goto read_error;
     }
@@ -119,7 +121,7 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     blfGetFileStatisticsEx(h, &statistics);
 
     /* print some file statistics */
-    if(verbose_flag) {
+    if (verbose_flag) {
         printf("BLF Start  : ");
         blfSystemTimePrint(&statistics.mMeasurementStartTime);
         printf("\nBLF End    : ");
@@ -128,18 +130,24 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     }
 
     success = 1;
-    while(success && blfPeekObject(h, &base)) {
-        switch(base.mObjectType) {
+    while (success && blfPeekObject(h, &base)) {
+        switch (base.mObjectType) {
         case BL_OBJ_TYPE_CAN_MESSAGE:
         case BL_OBJ_TYPE_CAN_MESSAGE2:
             message.mHeader.mBase = base;
             success = blfReadObjectSecure(h, &message.mHeader.mBase,
                                           sizeof(message));
-            if(success) {
+            if (success) {
                 /* diagnose data */
-                if(message.mDLC > 8) {
-                    fprintf(stderr, "invalid CAN message: DLC > 8\n");
-                    goto read_error;
+                if (message.mDLC > 8) {
+                    if (!big_dlc_warned) {
+                        fprintf(stderr,
+                                "WARNING: DLC > 8 not yet implemented. "
+                                "Skipping msgs.\n");
+                        big_dlc_warned = 1;
+                    }
+                    blfFreeObject(h, &message.mHeader.mBase);
+                    continue;
                 }
 
                 /* translate VBLCANMessage to message structure */
@@ -148,7 +156,7 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
                                           &canMessage.t.tv_sec,
                                           &canMessage.t.tv_nsec);
 
-                if(debug_flag) {
+                if (debug_flag) {
                     blfCANMessageDump(&canMessage);
                 }
 
@@ -162,7 +170,7 @@ void blfReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
         default:
             /* skip all other objects */
             success = blfSkipObject(h, &base);
-            if(debug_flag) {
+            if (debug_flag) {
                 printf("skipping object type = %d\n", base.mObjectType);
             }
             break;

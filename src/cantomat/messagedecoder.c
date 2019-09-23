@@ -118,7 +118,9 @@ void canMessage_decode(message_t      *dbcMessage,
 
         if (s->bit_len > 64) {
             if (!bitlen_warned) {
-                fprintf(stderr, "WARNING: Bit length above 64 not yet implemented! Signals skipped.\n");
+                fprintf(stderr,
+                        "WARNING: Decoding more than 64 bits not yet implemented! "
+                        "Signals skipped.\n");
                 bitlen_warned = 1;
             }
             // No way of dealing with these signals right now.
@@ -128,7 +130,8 @@ void canMessage_decode(message_t      *dbcMessage,
         if (s->signal_val_type != svt_integer) {
             if (!floats_warned) {
                 fprintf(stderr,
-                        "WARNING: Float and double not implemented yet! Signals skipped.\n");
+                        "WARNING: Float and double not implemented yet! "
+                        "Signals skipped.\n");
                 floats_warned = 1;
             }
             continue;
