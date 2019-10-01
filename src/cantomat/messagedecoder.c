@@ -17,6 +17,16 @@
 #include "dbcmodel.h"
 #include "messagedecoder.h"
 
+union thirtytwo {
+    uint32_t raw;
+    float phys;
+};
+
+union sixtyfour {
+    uint64_t raw;
+    double phys;
+};
+
 /*
  * Signal bit order:
  *
@@ -52,17 +62,13 @@ uint64 extract_raw_signal(const signal_t *const s,
                           const uint8 *const msgpayload,
                           const size_t dlc)
 {
-    //fprintf(stderr, "New signal\n");
-
     uint64 raw_value = 0ULL;
     unsigned char *p = (unsigned char *) &raw_value;
-    // endianess 1 is little, 0 is big
     size_t i;
     for (i = 0; i < dlc; i++) {
+        // endianess 1 is little, 0 is big
         p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
-        //fprintf(stderr, "%02X ", p[i]);
     }
-    //fprintf(stderr, "\n");
 
     // Big endian has bit start to msb, we have flipped to order of bytes.
     // So we need to calculate where the lsb is in this new order.
@@ -72,9 +78,6 @@ uint64 extract_raw_signal(const signal_t *const s,
         start -= s->bit_len - 1;
     }
 
-    //fprintf(stderr, "orig: 0x%016llX\n", raw_value);
-    //fprintf(stderr, "%u %u\n", start, s->bit_len);
-
     // We cannot handle these signals.
     if (start < 0 || start > 63) {
         // TODO: This should propagate to maybe not even passing on signal?
@@ -83,12 +86,44 @@ uint64 extract_raw_signal(const signal_t *const s,
     }
 
     raw_value >>= start;
-    //fprintf(stderr, "shft: 0x%016llX\n", raw_value);
     if (s->bit_len < 64) {
         raw_value &= ((1ULL << s->bit_len) - 1);
     }
-    //fprintf(stderr, "final: 0x%016llX\n", raw_value);
     return raw_value;
+}
+
+
+double raw_to_physical(uint64_t rawValue, const signal_t *const s)
+{
+    // [Physical value] = ([Raw value] * [Factor]) + [Offset]
+    double physical = 0;
+    if (s->signal_val_type == svt_float) {
+        union thirtytwo u = {.raw = rawValue};
+        physical = u.phys;
+
+    } else if (s->signal_val_type == svt_double) {
+        union sixtyfour u = {.raw = rawValue};
+        physical = u.phys;
+
+    } else {
+        if (s->signedness) {
+            int64_t signedValue;
+            if (rawValue & (1ULL << (s->bit_len-1))) {
+                rawValue = ~rawValue + 1;
+                if (s->bit_len < 8*sizeof(rawValue)) {
+                    rawValue &= (1ULL << s->bit_len) - 1;
+                }
+                signedValue = -((int64_t)rawValue);
+            } else {
+                signedValue = rawValue;
+            }
+
+            physical = signedValue;
+        } else {
+            physical = rawValue;
+        }
+    }
+    return physical * s->scale + s->offset;
 }
 
 
@@ -99,7 +134,6 @@ void canMessage_decode(message_t      *dbcMessage,
                        void           *cbData)
 {
     static int bitlen_warned = 0;
-    static int floats_warned = 0;
 
     uint64_t sec = canMessage->t.tv_sec;
     int64_t nsec = canMessage->t.tv_nsec;
@@ -123,42 +157,13 @@ void canMessage_decode(message_t      *dbcMessage,
                         "Signals skipped.\n");
                 bitlen_warned = 1;
             }
-            // No way of dealing with these signals right now.
             continue;
         }
 
-        if (s->signal_val_type != svt_integer) {
-            if (!floats_warned) {
-                fprintf(stderr,
-                        "WARNING: Float and double not implemented yet! "
-                        "Signals skipped.\n");
-                floats_warned = 1;
-            }
-            continue;
-        }
-
-        uint64 rawValue = extract_raw_signal(s,
-                                             canMessage->byte_arr,
+        uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr,
                                              canMessage->dlc);
 
-        // [Physical value] = ( [Raw value] * [Factor] ) + [Offset]
-        double physicalValue;
-        if (s->signedness) {
-            int64_t signedValue;
-            if (rawValue & (1ULL << (s->bit_len-1))) {
-                rawValue = ~rawValue + 1;
-                if (s->bit_len < 8*sizeof(rawValue)) {
-                    rawValue &= (1ULL << s->bit_len) - 1;
-                }
-                signedValue = -((int64_t)rawValue);
-            } else {
-                signedValue = rawValue;
-            }
-
-            physicalValue = signedValue * s->scale + s->offset;
-        } else {
-            physicalValue = (double) rawValue * s->scale + s->offset;
-        }
+        double physicalValue = raw_to_physical(rawValue, s);
 
         /* invoke signal processing callback function */
         signalProcCb(s, dtime, rawValue, physicalValue, cbData);
