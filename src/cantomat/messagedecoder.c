@@ -67,14 +67,14 @@ uint64 extract_raw_signal(const signal_t *const s,
     size_t i;
     for (i = 0; i < dlc; i++) {
         // endianess 1 is little, 0 is big
-        p[i] = s->endianess ? msgpayload[i] : msgpayload[7-i];
+        p[i] = s->endianess ? msgpayload[i] : msgpayload[dlc-1 - i];
     }
 
     // Big endian has bit start to msb, we have flipped to order of bytes.
     // So we need to calculate where the lsb is in this new order.
     uint8_t start = s->bit_start;
     if (!s->endianess) {
-        start = 56 - 8*(start/8) + start%8;
+        start = 8*(dlc-1 - start/8) + start%8;
         start -= s->bit_len - 1;
     }
 
@@ -89,6 +89,7 @@ uint64 extract_raw_signal(const signal_t *const s,
     if (s->bit_len < 64) {
         raw_value &= ((1ULL << s->bit_len) - 1);
     }
+
     return raw_value;
 }
 
@@ -135,13 +136,12 @@ void canMessage_decode(message_t      *dbcMessage,
 {
     static int bitlen_warned = 0;
 
-    uint64_t sec = canMessage->t.tv_sec;
-    int64_t nsec = canMessage->t.tv_nsec;
 
     /* limit time resolution */
-    if(timeResolution != 0) {
+    uint64_t sec = canMessage->t.tv_sec;
+    int64_t nsec = canMessage->t.tv_nsec;
+    if(timeResolution)
         nsec -= (nsec % timeResolution);
-    }
     double dtime = sec + nsec * 1e-9;
 
     /* iterate over all signals */
@@ -160,6 +160,7 @@ void canMessage_decode(message_t      *dbcMessage,
             continue;
         }
 
+        //fprintf(stderr, "id: %zu ", canMessage->id);
         uint64 rawValue = extract_raw_signal(s, canMessage->byte_arr,
                                              canMessage->dlc);
 
