@@ -134,8 +134,19 @@ void canMessage_decode(message_t      *dbcMessage,
                        signalProcCb_t  signalProcCb,
                        void           *cbData)
 {
-    static int bitlen_warned = 0;
+    // This is redundant for BLF, but just to be safe...
+    static int big_dlc_warned = 0;
+    if (dbcMessage->dlc > 8) {
+        if (!big_dlc_warned) {
+            fprintf(stderr,
+                    "WARNING: DLC > 8 decoding not yet implemented! "
+                    "Messages skipped.\n");
+            big_dlc_warned = 1;
+        }
+        return;
+    }
 
+    static int bitlen_warned = 0;
 
     /* limit time resolution */
     uint64_t sec = canMessage->t.tv_sec;
