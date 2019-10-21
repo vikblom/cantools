@@ -136,7 +136,7 @@ void canMessage_decode(message_t      *dbcMessage,
 {
     // This is redundant for BLF, but just to be safe...
     static int big_dlc_warned = 0;
-    if (dbcMessage->dlc > 8) {
+    if (canMessage->dlc > 8) {
         if (!big_dlc_warned) {
             fprintf(stderr,
                     "WARNING: DLC > 8 decoding not yet implemented! "
