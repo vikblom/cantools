@@ -137,8 +137,8 @@ main(int argc, char **argv)
             bus = atoi(optarg);
             break;
         case 'd':
-            if(verbose_flag) {
-                if(bus == -1) {
+            if (verbose_flag) {
+                if (bus == -1) {
                     fprintf(stderr, "Assigning DBC file %s to all busses\n", optarg);
                 } else {
                     fprintf(stderr, "Assigning DBC file %s to bus %d\n", optarg, bus);
@@ -153,12 +153,12 @@ main(int argc, char **argv)
             matFilename = optarg;
             break;
         case 'f':
-            if(!strcmp(optarg, "n")) {
+            if (!strcmp(optarg, "n")) {
                 signalFormat =  signalFormat_Name;
-            } else if(!strcmp(optarg, "mn")) {
+            } else if (!strcmp(optarg, "mn")) {
                 signalFormat =  signalFormat_Message
                     |  signalFormat_Name;
-            } else if(!strcmp(optarg, "dmn")) {
+            } else if (!strcmp(optarg, "dmn")) {
                 signalFormat =  signalFormat_Database
                     |  signalFormat_Message
                     |  signalFormat_Name;
@@ -189,34 +189,34 @@ main(int argc, char **argv)
     }
 
 #ifdef YYDEBUG
-    if(debug_flag) {
+    if (debug_flag) {
         extern int yydebug;
         yydebug=0; // Skip Bison debug, it is very noisy.
     }
 #endif
 
     /* diagnose options */
-    if(inputFiles != 1) {
+    if (inputFiles != 1) {
         fprintf(stderr, "error: please specify exactly one input file\n");
         busAssignment_free(busAssignment);
         usage_error();
     }
 
-    if(matFilename == NULL) {
+    if (matFilename == NULL) {
         fprintf(stderr, "error: MAT output filename not specified\n");
         busAssignment_free(busAssignment);
         usage_error();
     }
 
     /* parse DBC files */
-    if(busAssignment_parseDBC(busAssignment)) {
+    if (busAssignment_parseDBC(busAssignment)) {
         fprintf(stderr, "error: parsing DBC file failed\n");
         exit(1);
     }
 
     /* parse input file */
-    if(verbose_flag) {
-        if(inputFilename != NULL) {
+    if (verbose_flag) {
+        if (inputFilename != NULL) {
             fprintf(stderr,
                     "Parsing input file %s\n",
                     inputFilename?inputFilename:"<stdin>");
@@ -227,15 +227,12 @@ main(int argc, char **argv)
                                    signalFormat,
                                    timeResolution,
                                    parserFunction);
-    if(measurement != NULL) {
-
-        /* write MAT file */
-        if(verbose_flag) {
+    if (measurement != NULL) {
+        if (verbose_flag) {
             fprintf(stderr, "Writing MAT file %s\n", matFilename);
         }
         matWrite(measurement, matFilename);
 
-        /* free memory */
         measurement_free(measurement);
     }
     ret = 0;
