@@ -92,7 +92,7 @@ static void signalProc_print(
             s->comment!=NULL?s->comment:"");
 
     /* free temp. signal name */
-    if(outputSignalName != NULL) free(outputSignalName);
+    if (outputSignalName != NULL) free(outputSignalName);
 }
 
 /*
@@ -132,7 +132,7 @@ static void signalProc_timeSeries(
                                                 (void *)outputSignalName);
 
     /* allocate new time series structure on first value */
-    if(NULL == timeSeries) {
+    if (NULL == timeSeries) {
         timeSeries = (timeSeries_t *)malloc(sizeof(*timeSeries));
         timeSeries->n = 0;
         timeSeries->time = NULL;
@@ -143,7 +143,7 @@ static void signalProc_timeSeries(
     }
 
     /* perform reallocation if allocated buffer would be exceeded */
-    if((timeSeries->n & (realloc_count-1)) == 0) {
+    if ((timeSeries->n & (realloc_count-1)) == 0) {
         unsigned int newsize = (timeSeries->n & ~(realloc_count-1)) + realloc_count;
         timeSeries->time  = realloc(timeSeries->time, sizeof(double)*newsize);
         timeSeries->value = realloc(timeSeries->value, sizeof(double)*newsize);
@@ -155,7 +155,7 @@ static void signalProc_timeSeries(
     timeSeries->n++;
 
     /* free temp. signal name */
-    if(outputSignalName != NULL) free(outputSignalName);
+    if (outputSignalName != NULL) free(outputSignalName);
 }
 
 /*
@@ -175,17 +175,17 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
         busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
 
         /* check if bus matches */
-        if((entry->bus == -1) || (entry->bus == canMessage->bus)) {
-            if(NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
+        if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
+            if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
                 /* found the message in the database */
                 char *local_prefix;
                 const char *const prefix = NULL;
 
                 /* setup and forward message prefix */
-                if(messageProcCbData->signalFormat & signalFormat_Message) {
+                if (messageProcCbData->signalFormat & signalFormat_Message) {
                     local_prefix = signalFormat_stringAppend(prefix, dbcMessage->name);
                 } else {
-                    if(prefix != NULL) local_prefix = strdup(prefix);
+                    if (prefix != NULL) local_prefix = strdup(prefix);
                     else               local_prefix = NULL;
                 }
 
@@ -204,7 +204,7 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                 }
 
                 /* free local prefix */
-                if(local_prefix != NULL) free(local_prefix);
+                if (local_prefix != NULL) free(local_prefix);
 
                 /* end search if message was found */
                 break;
@@ -223,57 +223,53 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
                                 sint32 timeResolution,
                                 parserFunction_t parserFunction)
 {
-    FILE *fp;
-    measurement_t *measurement;
-
-    measurement = malloc(sizeof(measurement_t));
-    if(measurement!= NULL) {
-        /* create time series hash */
-        measurement->timeSeriesHash = create_hashtable(
-            16,
-            signalName_computeHash,
-            signalNames_equal);
-        if(measurement->timeSeriesHash != NULL) {
-
-            /* open input file */
-            if(filename != NULL) {
-                fp = fopen(filename, "rb");
-            } else {
-                fp = stdin;
-            }
-            if(fp != NULL) {
-                /* call file processor */
-                messageProcCbData_t messageProcCbData = {
-                    busAssignment,
-                    measurement,
-                    signalFormat,
-                    timeResolution
-                };
-
-                /*
-                 * invoke the file format parser on file pointer fp
-                 * the parser function is responsible for closing the input
-                 * file stream
-                 */
-                parserFunction(fp, canMessage_process, &messageProcCbData);
-                if(filename != NULL) {
-                    fclose(fp);
-                }
-            } else {
-                fprintf(stderr, "measurement_read(): can't open input file\n");
-                hashtable_destroy(measurement->timeSeriesHash, 0);
-                free(measurement);
-                measurement = NULL;
-            }
-        } else {
-            fprintf(stderr,
-                    "measurement_read(): can't create time series hash table\n");
-            free(measurement);
-            measurement = NULL;
-        }
-    } else {
+    measurement_t *measurement = malloc(sizeof(measurement_t));
+    if (measurement == NULL) {
         fprintf(stderr,
                 "measurement_read(): can't allocate measurement structure\n");
+        return NULL;
+    }
+    /* create time series hash */
+    measurement->timeSeriesHash = create_hashtable(16,
+                                                   signalName_computeHash,
+                                                   signalNames_equal);
+    if (measurement->timeSeriesHash == NULL) {
+        fprintf(stderr,
+                "measurement_read(): can't create time series hash table\n");
+        free(measurement);
+        return NULL;
+    }
+
+    /* open input file */
+    FILE *fp;
+    if (filename != NULL) {
+        fp = fopen(filename, "rb");
+    } else {
+        fp = stdin;
+    }
+
+    if (fp == NULL) {
+        fprintf(stderr, "measurement_read(): can't open input\n");
+        hashtable_destroy(measurement->timeSeriesHash, 0);
+        free(measurement);
+        return NULL;
+    }
+
+    /*
+     * invoke the file format parser on file pointer fp
+     * the parser function is responsible for closing the input
+     * file stream
+     */
+    messageProcCbData_t messageProcCbData = {
+        busAssignment,
+        measurement,
+        signalFormat,
+        timeResolution
+    };
+    parserFunction(fp, canMessage_process, &messageProcCbData);
+
+    if (filename != NULL) {
+        fclose(fp);
     }
     return measurement;
 }
@@ -282,7 +278,7 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
 void measurement_free(measurement_t *m)
 {
     // fprintf(stderr,"freeing %p (measurement)\n",m);
-    if(m != NULL) {
+    if (m != NULL) {
 
         /* free time series */
         struct hashtable *timeSeriesHash = m->timeSeriesHash;

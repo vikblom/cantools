@@ -222,11 +222,13 @@ main(int argc, char **argv)
                     inputFilename?inputFilename:"<stdin>");
         }
     }
+
     measurement = measurement_read(busAssignment,
                                    inputFilename,
                                    signalFormat,
                                    timeResolution,
                                    parserFunction);
+
     if (measurement != NULL) {
         if (verbose_flag) {
             fprintf(stderr, "Writing MAT file %s\n", matFilename);
