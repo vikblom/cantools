@@ -256,9 +256,11 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
     }
 
     /*
-     * invoke the file format parser on file pointer fp
-     * the parser function is responsible for closing the input
+     * Unvoke the file format parser on file pointer fp.
+     * This function will call the passed cb for all msgs.
+     * The parser function is responsible for closing the input
      * file stream
+     * One of: blfReader_processFile or friends...
      */
     messageProcCbData_t messageProcCbData = {
         busAssignment,

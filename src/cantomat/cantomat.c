@@ -109,8 +109,8 @@ main(int argc, char **argv)
         int option_index = 0;
         int c;
 
-        c = getopt_long (argc, argv, "a:B:b:c:d:f:m:t:v:",
-                         long_options, &option_index);
+        c = getopt_long(argc, argv, "a:B:b:c:d:f:m:t:v:",
+                        long_options, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1) break;
@@ -120,17 +120,17 @@ main(int argc, char **argv)
             break;
         case 'a':
             inputFilename = optarg;
-            parserFunction =ascReader_processFile;
+            parserFunction = ascReader_processFile;
             inputFiles++;
             break;
         case 'B':
             inputFilename = optarg;
-            parserFunction =blfReader_processFile;
+            parserFunction = blfReader_processFile;
             inputFiles++;
             break;
         case 'c':
             inputFilename = optarg;
-            parserFunction =clgReader_processFile;
+            parserFunction = clgReader_processFile;
             inputFiles++;
             break;
         case 'b':
