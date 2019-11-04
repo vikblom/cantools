@@ -22,6 +22,7 @@
 typedef struct {
     int bus;
     char *filename;
+    char *basename;
     messageHash_t *messageHash;
 } busAssignmentEntry_t;
 

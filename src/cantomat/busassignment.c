@@ -20,6 +20,34 @@
 
 extern int verbose_flag;
 
+
+char *basename(char *path)
+{
+    int i = 0;
+    int first = 0;
+    int stop = 0;
+
+    while (path[i++]) {
+        if (path[i] == '/' || path[i] == '\\') {
+            first = i+1;
+        } else if (path[i] == '.') {
+            stop = i;
+        }
+    }
+    if (stop == 0)
+        stop = i-1; // index of \0
+
+    int len = stop - first;
+    char *out = malloc(len+1);
+    for (i = 0; i < len; i++) {
+        out[i] = path[first+i];
+    }
+    out[len] = '\0';
+
+    return out;
+}
+
+
 busAssignment_t *busAssignment_create(void)
 {
     CREATE(busAssignment_t, busAssignment);
@@ -35,10 +63,10 @@ void busAssignment_associate(busAssignment_t *busAssignment,
     busAssignment->n++;
     busAssignment->list = (busAssignmentEntry_t *)
         realloc(busAssignment->list,
-                busAssignment->n
-                * sizeof(*(busAssignment->list)));
+                busAssignment->n * sizeof(*(busAssignment->list)));
     busAssignment->list[busAssignment->n-1].bus = bus;
     busAssignment->list[busAssignment->n-1].filename = strdup(filename);
+    busAssignment->list[busAssignment->n-1].basename = basename(filename);
     busAssignment->list[busAssignment->n-1].messageHash = NULL;
 }
 
@@ -84,6 +112,7 @@ void busAssignment_free(busAssignment_t *busAssignment)
         for(i = 0; i < busAssignment->n; i++) {
             busAssignmentEntry_t *entry = &(busAssignment->list[i]);
             free(entry->filename);
+            free(entry->basename);
             messageHash_free(entry->messageHash);
         }
         if(busAssignment->list != NULL) free(busAssignment->list);

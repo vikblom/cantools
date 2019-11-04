@@ -34,16 +34,16 @@ char *signalFormat_stringAppend(const char *in, const char *app)
 {
     char *ret;
 
-    if(in == NULL) {
+    if (in == NULL) {
         ret = strdup(app);
     } else {
         char *dp;
         char *sp;
 
         // FIXME: This is probably leaked!
-        ret = malloc(strlen(in) + 2 + strlen(app) + 1);
+        ret = malloc(strlen(in) + 1 + strlen(app) + 1);
         dp = strapp(ret, in);
-        dp = strapp(dp, "__");
+        dp = strapp(dp, ".");
         dp = strapp(dp, app);
         *dp = '\0';
     }

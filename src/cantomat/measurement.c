@@ -178,15 +178,16 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
         if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
             if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
                 /* found the message in the database */
-                char *local_prefix;
-                const char *const prefix = NULL;
 
                 /* setup and forward message prefix */
+                char *local_prefix = NULL;
+                if (messageProcCbData->signalFormat & signalFormat_Database) {
+                    local_prefix = signalFormat_stringAppend(local_prefix,
+                                                             entry->basename);
+                }
                 if (messageProcCbData->signalFormat & signalFormat_Message) {
-                    local_prefix = signalFormat_stringAppend(prefix, dbcMessage->name);
-                } else {
-                    if (prefix != NULL) local_prefix = strdup(prefix);
-                    else               local_prefix = NULL;
+                    local_prefix = signalFormat_stringAppend(local_prefix,
+                                                             dbcMessage->name);
                 }
 
                 /* call message decoder with time series storage callback */
