@@ -180,14 +180,21 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                 /* found the message in the database */
 
                 /* setup and forward message prefix */
+                char *tmp = NULL;
                 char *local_prefix = NULL;
                 if (messageProcCbData->signalFormat & signalFormat_Database) {
-                    local_prefix = signalFormat_stringAppend(local_prefix,
-                                                             entry->basename);
+                    // FIXME: Use a proper append function instead
+                    tmp = signalFormat_stringAppend(local_prefix,
+                                                    entry->basename);
+                    free(local_prefix);
+                    local_prefix = tmp;
                 }
                 if (messageProcCbData->signalFormat & signalFormat_Message) {
-                    local_prefix = signalFormat_stringAppend(local_prefix,
-                                                             dbcMessage->name);
+                    // FIXME: Use a proper append function instead
+                    tmp = signalFormat_stringAppend(local_prefix,
+                                                    dbcMessage->name);
+                    free(local_prefix);
+                    local_prefix = tmp;
                 }
 
                 /* call message decoder with time series storage callback */
