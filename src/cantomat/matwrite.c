@@ -107,14 +107,16 @@ int matWrite(measurement_t *measurement, const char *outFileName)
         matvar_t *timevar = Mat_VarCreate(signal_key,
                                           MAT_C_DOUBLE, MAT_T_DOUBLE,
                                           2, dim,
-                                          timeSeries->time, 0);
+                                          timeSeries->time,
+                                          MAT_F_DONT_COPY_DATA);
         Mat_VarSetStructFieldByName(topstruct, fieldnames[3], i, timevar);
 
         // Data vector
         matvar_t *datavar = Mat_VarCreate(signal_key,
                                           MAT_C_DOUBLE, MAT_T_DOUBLE,
                                           2, dim,
-                                          timeSeries->value, 0);
+                                          timeSeries->value,
+                                          MAT_F_DONT_COPY_DATA);
         Mat_VarSetStructFieldByName(topstruct, fieldnames[4], i, datavar);
 
         i++;
