@@ -30,7 +30,7 @@
 // Basically a custom version of strchr for periods.
 const char *nextfield(const char *in, char *out)
 {
-    while (*in && *in != '.')
+    while (*in && *in != '/')
         *out++ = *in++;
     *out = '\0';
     return *in == '.' ? in+1 : in;
