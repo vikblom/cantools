@@ -38,7 +38,6 @@ typedef struct {
 typedef struct {
     busAssignment_t *busAssignment;
     measurement_t   *measurement;
-    signalFormat_t   signalFormat;
     sint32           timeResolution;
 } messageProcCbData_t;
 
@@ -180,28 +179,13 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                 /* found the message in the database */
 
                 /* setup and forward message prefix */
-                char *tmp = NULL;
-                char *local_prefix = NULL;
-                if (messageProcCbData->signalFormat & signalFormat_Database) {
-                    // FIXME: Use a proper append function instead
-                    tmp = signalFormat_stringAppend(local_prefix,
-                                                    entry->basename);
-                    free(local_prefix);
-                    local_prefix = tmp;
-                }
-                if (messageProcCbData->signalFormat & signalFormat_Message) {
-                    // FIXME: Use a proper append function instead
-                    tmp = signalFormat_stringAppend(local_prefix,
-                                                    dbcMessage->name);
-                    free(local_prefix);
-                    local_prefix = tmp;
-                }
-
+                char *msg_prefix = signalFormat_stringAppend(entry->basename,
+                                                             dbcMessage->name);
                 /* call message decoder with time series storage callback */
                 {
                     signalProcCbData_t signalProcCbData = {
                         messageProcCbData->measurement->timeSeriesHash,
-                        local_prefix,
+                        msg_prefix,
                     };
 
                     canMessage_decode(dbcMessage,
@@ -210,9 +194,7 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                                       signalProc_timeSeries,
                                       &signalProcCbData);
                 }
-
-                /* free local prefix */
-                if (local_prefix != NULL) free(local_prefix);
+                free(msg_prefix);
 
                 /* end search if message was found */
                 break;
@@ -227,7 +209,6 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
  */
 measurement_t *measurement_read(busAssignment_t *busAssignment,
                                 const char *filename,
-                                signalFormat_t signalFormat,
                                 sint32 timeResolution,
                                 parserFunction_t parserFunction)
 {
@@ -273,7 +254,6 @@ measurement_t *measurement_read(busAssignment_t *busAssignment,
     messageProcCbData_t messageProcCbData = {
         busAssignment,
         measurement,
-        signalFormat,
         timeResolution
     };
     parserFunction(fp, canMessage_process, &messageProcCbData);

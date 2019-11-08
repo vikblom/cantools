@@ -39,7 +39,6 @@ typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 
 measurement_t *measurement_read(busAssignment_t *busAssignment,
                                 const char *filename,
-                                signalFormat_t signalFormat,
                                 sint32 timeResolution,
                                 parserFunction_t parserFunction);
 

@@ -18,7 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include "signalformat.h"
 #include "measurement.h"
 #include "busassignment.h"
 #include "matwrite.h"
@@ -75,7 +74,6 @@ main(int argc, char **argv)
     char *matFilename = NULL;
     busAssignment_t *busAssignment = busAssignment_create();
     int bus = -1;
-    signalFormat_t signalFormat = signalFormat_Name;
     measurement_t *measurement;
     int ret = 1;
     sint32 timeResolution = 0;
@@ -152,22 +150,6 @@ main(int argc, char **argv)
         case 'm':
             matFilename = optarg;
             break;
-        case 'f':
-            if (!strcmp(optarg, "n")) {
-                signalFormat =  signalFormat_Name;
-            } else if (!strcmp(optarg, "mn")) {
-                signalFormat =  signalFormat_Message
-                    |  signalFormat_Name;
-            } else if (!strcmp(optarg, "dmn")) {
-                signalFormat =  signalFormat_Database
-                    |  signalFormat_Message
-                    |  signalFormat_Name;
-            } else {
-                fprintf(stderr, "error: format must be 's', 'ms', or 'dms'\n");
-                usage_error();
-            }
-            matFilename = optarg;
-            break;
         case 't':
             timeResolution = atoi(optarg);
             break;
@@ -225,7 +207,6 @@ main(int argc, char **argv)
 
     measurement = measurement_read(busAssignment,
                                    inputFilename,
-                                   signalFormat,
                                    timeResolution,
                                    parserFunction);
 
