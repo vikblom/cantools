@@ -33,7 +33,7 @@ const char *nextfield(const char *in, char *out)
     while (*in && *in != '/')
         *out++ = *in++;
     *out = '\0';
-    return *in == '.' ? in+1 : in;
+    return *in == '/' ? in+1 : in;
 }
 
 

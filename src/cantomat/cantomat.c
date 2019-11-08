@@ -52,17 +52,12 @@ help(void)
             "  -c, --clg <clgfile>        CLG input file\n"
             "  -v, --vsb <vsbfile>        VSB input file\n"
             "  -m, --mat <matfile>        MAT output file\n"
-            "  -f, --format <format>      signal name format\n"
             "  -t, --timeres <nanosec>    time resolution\n"
             "      --verbose              verbose output\n"
             "      --brief                brief output (default)\n"
             "      --debug                output debug information\n"
             "      --help                 display this help and exit\n"
-            "\n"
-            "<format> is either n, mn, or dmn, specifying the output name format\n"
-            "      n                      signalname\n"
-            "      mn                     messagename_signalname\n"
-            "      dmn                    dbcname_messagename_signalname\n",
+            "\n",
             program_name);
 }
 
@@ -95,7 +90,6 @@ main(int argc, char **argv)
             {"bus",     required_argument, 0, 'b'},
             {"clg",     required_argument, 0, 'c'},
             {"dbc",     required_argument, 0, 'd'},
-            {"format",  required_argument, 0, 'f'},
             {"mat",     required_argument, 0, 'm'},
             {"timeres", required_argument, 0, 't'},
             {"vsb",     required_argument, 0, 'v'},

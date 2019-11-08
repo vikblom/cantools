@@ -181,6 +181,7 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                 /* setup and forward message prefix */
                 char *msg_prefix = signalFormat_stringAppend(entry->basename,
                                                              dbcMessage->name);
+
                 /* call message decoder with time series storage callback */
                 {
                     signalProcCbData_t signalProcCbData = {
