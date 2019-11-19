@@ -40,10 +40,9 @@ const char *nextfield(const char *in, char *out)
 /*
  * matWrite - write signals from measurement structure to MAT file
  */
-int matWrite(measurement_t *measurement, const char *outFileName)
+int matWrite(struct hashtable *timeSeriesHash, const char *outFileName)
 {
     /* loop over all time series */
-    struct hashtable *timeSeriesHash = measurement->timeSeriesHash;
     if (hashtable_count(timeSeriesHash) == 0) {
         fprintf(stderr, "error: measurement empty, nothing to write\n");
         return 1;

@@ -208,7 +208,7 @@ main(int argc, char **argv)
         if (verbose_flag) {
             fprintf(stderr, "Writing MAT file %s\n", matFilename);
         }
-        matWrite(measurement, matFilename);
+        matWrite(measurement->timeSeriesHash, matFilename);
 
         measurement_free(measurement);
     }
