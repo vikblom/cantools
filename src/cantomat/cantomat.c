@@ -79,12 +79,13 @@ static int cantomat(char *inputFilename,
     struct hashtable *ts_hashmap = can_decode(can_hashmap, busAssignment);
     fprintf(stderr, "%d timeseries\n", hashtable_count(ts_hashmap));
 
-
-
     destroy_messages(can_hashmap);
-    hashtable_destroy(ts_hashmap, 0);
     //WRITE
     //matWrite(measurement->timeSeriesHash, matFilename);
+
+
+
+    destroy_timeseries(ts_hashmap);
 }
 
 

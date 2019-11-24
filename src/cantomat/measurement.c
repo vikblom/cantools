@@ -217,28 +217,57 @@ struct hashtable *can_decode(struct hashtable *can_hashmap,
 
     struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
     do {
-        frame_key_t *key = hashtable_iterator_key(itr);
+        frame_key_t *frame_key = hashtable_iterator_key(itr);
         char *dbcname; // TODO: Find a smoother way to return this info.
-        message_t *msg_spec = find_msg_spec(key, bus_lib, &dbcname);
+        message_t *msg_spec = find_msg_spec(frame_key, bus_lib, &dbcname);
         if (!msg_spec)
             continue; // Decode not possible
 
-
+        char *name_base = signalFormat_stringAppend(dbcname, msg_spec->name);
         msg_series_t *val = hashtable_iterator_value(itr);
-
         signal_list_t *sl;
         for(sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
             const signal_t *const s = sl->signal;
             double *data;
             if (data = signal_decode(s, val->data, val->dlc, val->n)) {
 
+                char *signal_key = signalFormat_stringAppend(name_base, s->name);
+
+                timeSeries_t *timeSeries = malloc(sizeof(timeSeries_t));
+                timeSeries->n = val->n;
+                timeSeries->time = val->time;
+                timeSeries->value = data;
+
+                hashtable_insert(ts_hashmap,
+                                 (void *) signal_key,
+                                 (void *) timeSeries);
             }
         }
+        free(name_base);
     } while (hashtable_iterator_advance(itr));
     free(itr);
 
     return ts_hashmap;
 }
+
+void destroy_timeseries(struct hashtable *ts_hashmap)
+{
+
+    if (!ts_hashmap)
+        return;
+
+    if (hashtable_count(ts_hashmap)) {
+        struct hashtable_itr *itr = hashtable_iterator(ts_hashmap);
+        do {
+            timeSeries_t *ts = hashtable_iterator_value(itr);
+            free(ts->value);
+            free(ts);
+        } while (hashtable_iterator_advance(itr));
+        free(itr);
+    }
+    hashtable_destroy(ts_hashmap, 0);
+}
+
 
 
 /* free measurement structure */

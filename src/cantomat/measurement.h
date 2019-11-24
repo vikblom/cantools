@@ -49,6 +49,7 @@ typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 struct hashtable *read_messages(const char *filename,
                                 parserFunction_t parserFunction);
 void destroy_messages(struct hashtable *can_hashmap);
+void destroy_timeseries(struct hashtable *ts_hashmap);
 
 struct hashtable *can_decode(struct hashtable *can_hashmap,
                              busAssignment_t *bus_lib);
