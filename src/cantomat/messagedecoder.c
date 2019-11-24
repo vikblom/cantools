@@ -149,8 +149,7 @@ double *signal_decode(const signal_t *const spec,
 
     for (int i = 0; i < n; ++i) {
         uint64 raw = extract_raw_signal(spec, bytes + i * dlc, dlc);
-        //data[i] = raw_to_physical(raw, spec);
-        double foo = raw_to_physical(raw, spec);
+        data[i] = raw_to_physical(raw, spec);
     }
     return data;
 }
