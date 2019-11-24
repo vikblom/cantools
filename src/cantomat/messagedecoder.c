@@ -108,7 +108,7 @@ double raw_to_physical(uint64_t rawValue, const signal_t *const s)
 
     } else {
         if (s->signedness) {
-            int64_t signedValue;
+            int64_t signedValue = 0;
             if (rawValue & (1ULL << (s->bit_len-1))) {
                 rawValue = ~rawValue + 1;
                 if (s->bit_len < 8*sizeof(rawValue)) {
@@ -125,6 +125,34 @@ double raw_to_physical(uint64_t rawValue, const signal_t *const s)
         }
     }
     return physical * s->scale + s->offset;
+}
+
+
+double *signal_decode(const signal_t *const spec,
+                      unsigned char *bytes,
+                      uint32_t dlc, uint32_t n)
+{
+    static int bitlen_warned = 0;
+    if (spec->bit_len > 64) {
+        if (!bitlen_warned) {
+            fprintf(stderr,
+                    "WARNING: Decoding more than 64 bits not yet implemented! "
+                    "These signals will be skipped.\n");
+            bitlen_warned = 1;
+        }
+        return NULL;
+    }
+
+    double *data = malloc(n * sizeof(double));
+    if (!data)
+        return NULL;
+
+    for (int i = 0; i < n; ++i) {
+        uint64 raw = extract_raw_signal(spec, bytes + i * dlc, dlc);
+        //data[i] = raw_to_physical(raw, spec);
+        double foo = raw_to_physical(raw, spec);
+    }
+    return data;
 }
 
 

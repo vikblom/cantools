@@ -37,6 +37,11 @@ void canMessage_decode(message_t      *dbcMessage,
                        signalProcCb_t  signalProcCb,
                        void           *cbData);
 
+double *signal_decode(const signal_t *const spec,
+                      unsigned char *raw,
+                      uint32_t dlc, uint32_t n);
+
+
 #ifdef __cplusplus
 }
 #endif

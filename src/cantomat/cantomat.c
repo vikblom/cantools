@@ -73,24 +73,16 @@ static int cantomat(char *inputFilename,
         return 1;
     }
 
-    fprintf(stderr, "%d messages in hashmap\n", hashtable_count(can_hashmap));
-
-    struct hashtable *ts_hashmap = can_decode(can_hashmap, busAssignment);
+    fprintf(stderr, "%d messages\n", hashtable_count(can_hashmap));
 
     // DECODE
-    //measurement->timeSeriesHash = create_hashtable(16,
-    //                                               signalName_computeHash,
-    //                                               signalNames_equal);
-    //for(i = 0; i < messageProcCbData->busAssignment->n ; i++) {
-    //    busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
-    //
-    //    /* check if bus matches */
-    //    if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
-    //        if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
+    struct hashtable *ts_hashmap = can_decode(can_hashmap, busAssignment);
+    fprintf(stderr, "%d timeseries\n", hashtable_count(ts_hashmap));
+
 
 
     destroy_messages(can_hashmap);
-
+    hashtable_destroy(ts_hashmap, 0);
     //WRITE
     //matWrite(measurement->timeSeriesHash, matFilename);
 }

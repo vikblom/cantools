@@ -38,8 +38,9 @@ typedef struct {
 typedef struct {
     unsigned int n;
     unsigned int cap;
-    unsigned int dlc;
     unsigned char *data;
+    double *time;
+    unsigned int dlc;
 } msg_series_t;
 
 
@@ -49,6 +50,7 @@ struct hashtable *read_messages(const char *filename,
                                 parserFunction_t parserFunction);
 void destroy_messages(struct hashtable *can_hashmap);
 
-void measurement_free(measurement_t *m);
+struct hashtable *can_decode(struct hashtable *can_hashmap,
+                             busAssignment_t *bus_lib);
 
 #endif
