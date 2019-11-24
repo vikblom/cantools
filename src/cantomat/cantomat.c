@@ -73,7 +73,9 @@ static int cantomat(char *inputFilename,
         return 1;
     }
 
+    fprintf(stderr, "%d messages in hashmap\n", hashtable_count(can_hashmap));
 
+    struct hashtable *ts_hashmap = can_decode(can_hashmap, busAssignment);
 
     // DECODE
     //measurement->timeSeriesHash = create_hashtable(16,
