@@ -75,7 +75,7 @@ static int can_equal(void *this, void *that)
     frame_key_t *this_p = (frame_key_t *) this;
     frame_key_t *that_p = (frame_key_t *) that;
 
-    return this_p->id == that_p->id && this_p->bus == that_p->bus;
+    return this_p->id == that_p->id;// && this_p->bus == that_p->bus;
 }
 
 
@@ -228,11 +228,16 @@ struct hashtable *can_decode(struct hashtable *can_hashmap,
         signal_list_t *sl;
         for(sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
             const signal_t *const s = sl->signal;
+
+            char *signal_key = signalFormat_stringAppend(name_base, s->name);
+            if (hashtable_search(ts_hashmap, signal_key)) {
+                fprintf(stderr, "Signal %s already defined!\n", signal_key);
+                free(signal_key);
+                continue;
+            }
+
             double *data;
             if (data = signal_decode(s, val->data, val->dlc, val->n)) {
-
-                char *signal_key = signalFormat_stringAppend(name_base, s->name);
-
                 timeSeries_t *timeSeries = malloc(sizeof(timeSeries_t));
                 timeSeries->n = val->n;
                 timeSeries->time = val->time;
