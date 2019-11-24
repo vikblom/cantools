@@ -36,9 +36,7 @@ typedef struct {
 
 /* callback structure for timeSeries message handler */
 typedef struct {
-    busAssignment_t *busAssignment;
-    measurement_t   *measurement;
-    sint32           timeResolution;
+    struct hashtable *msg_hashmap;
 } messageProcCbData_t;
 
 /* simple string hash function for signal names */
@@ -60,39 +58,19 @@ static int signalNames_equal ( void *key1, void *key2 )
     return strcmp((char *)key1, (char *)key2) == 0;
 }
 
-/* used only for debugging: print data to stderr */
-static void signalProc_print(
-    const signal_t *s,
-    const canMessage_t *canMessage,
-    uint32 rawValue,
-    double physicalValue,
-    void *cbData)
+
+static unsigned int msg_hash(void *this)
 {
-    /* recover callback data */
-    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
-    char *outputSignalName =
-        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
-
-    fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)"
-            " [%f|%f] %d %ul \"%s\"\n",
-            outputSignalName,
-            physicalValue,
-            rawValue,
-            s->bit_start,
-            s->bit_len,
-            s->endianess,
-            s->signedness?'-':'+',
-            s->scale,
-            s->offset,
-            s->min,
-            s->max,
-            s->mux_type,
-            (unsigned int)s->mux_value,
-            s->comment!=NULL?s->comment:"");
-
-    /* free temp. signal name */
-    if (outputSignalName != NULL) free(outputSignalName);
+    return *((uint32 *) this);
 }
+
+
+static int msg_equal(void *this, void *that)
+{
+    return *((uint32 *) this) == *((uint32 *) that);
+}
+
+
 
 /*
  * Add signal value to time series array
@@ -160,7 +138,7 @@ static void signalProc_timeSeries(
 /*
  * callback function for processing a CAN message
  */
-static void canMessage_process(canMessage_t *canMessage, void *cbData)
+static void message_callback(canMessage_t *canMessage, void *cbData)
 {
     messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
 
@@ -183,18 +161,16 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
                                                              dbcMessage->name);
 
                 /* call message decoder with time series storage callback */
-                {
-                    signalProcCbData_t signalProcCbData = {
-                        messageProcCbData->measurement->timeSeriesHash,
-                        msg_prefix,
-                    };
+                signalProcCbData_t signalProcCbData = {
+                    messageProcCbData->measurement->timeSeriesHash,
+                    msg_prefix,
+                };
 
-                    canMessage_decode(dbcMessage,
-                                      canMessage,
-                                      messageProcCbData->timeResolution,
-                                      signalProc_timeSeries,
-                                      &signalProcCbData);
-                }
+                canMessage_decode(dbcMessage,
+                                  canMessage,
+                                  messageProcCbData->timeResolution,
+                                  signalProc_timeSeries,
+                                  &signalProcCbData);
                 free(msg_prefix);
 
                 /* end search if message was found */
@@ -208,56 +184,30 @@ static void canMessage_process(canMessage_t *canMessage, void *cbData)
  * process CAN trace file with given bus assignment and output
  * signal format
  */
-measurement_t *measurement_read(busAssignment_t *busAssignment,
-                                const char *filename,
-                                sint32 timeResolution,
-                                parserFunction_t parserFunction)
+int read_messages(const char *filename, parserFunction_t parserFunction)
 {
-    measurement_t *measurement = malloc(sizeof(measurement_t));
-    if (measurement == NULL) {
-        fprintf(stderr,
-                "measurement_read(): can't allocate measurement structure\n");
-        return NULL;
-    }
-    /* create time series hash */
-    measurement->timeSeriesHash = create_hashtable(16,
-                                                   signalName_computeHash,
-                                                   signalNames_equal);
-    if (measurement->timeSeriesHash == NULL) {
-        fprintf(stderr,
-                "measurement_read(): can't create time series hash table\n");
-        free(measurement);
-        return NULL;
-    }
-
     /* open input file */
-    FILE *fp;
-    if (filename != NULL) {
-        fp = fopen(filename, "rb");
-    } else {
-        fp = stdin;
+    FILE *fp = filename ? fopen(filename, "rb") : stdin;
+    if (!fp) {
+        fprintf(stderr, "Opening input file failed.\n");
+        return 1;
     }
 
-    if (fp == NULL) {
-        fprintf(stderr, "measurement_read(): can't open input\n");
-        hashtable_destroy(measurement->timeSeriesHash, 0);
-        free(measurement);
-        return NULL;
-    }
+    // TODO: One hashmap for each channel to avoid collisions
+    struct hashtable *msg_hashmap = create_hashtable(16, msg_hash, msg_equal);
+
 
     /*
-     * Unvoke the file format parser on file pointer fp.
+     * Invoke the file format parser on file pointer fp.
      * This function will call the passed cb for all msgs.
      * The parser function is responsible for closing the input
      * file stream
      * One of: blfReader_processFile or friends...
      */
     messageProcCbData_t messageProcCbData = {
-        busAssignment,
-        measurement,
-        timeResolution
+        msg_hashmap
     };
-    parserFunction(fp, canMessage_process, &messageProcCbData);
+    parserFunction(fp, message_callback, &messageProcCbData);
 
     if (filename != NULL) {
         fclose(fp);
@@ -292,4 +242,39 @@ void measurement_free(measurement_t *m)
         hashtable_destroy(m->timeSeriesHash, 1);
         free(m);
     }
+}
+
+
+/* used only for debugging: print data to stderr */
+static void signalProc_print(
+    const signal_t *s,
+    const canMessage_t *canMessage,
+    uint32 rawValue,
+    double physicalValue,
+    void *cbData)
+{
+    /* recover callback data */
+    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
+    char *outputSignalName =
+        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
+
+    fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)"
+            " [%f|%f] %d %ul \"%s\"\n",
+            outputSignalName,
+            physicalValue,
+            rawValue,
+            s->bit_start,
+            s->bit_len,
+            s->endianess,
+            s->signedness?'-':'+',
+            s->scale,
+            s->offset,
+            s->min,
+            s->max,
+            s->mux_type,
+            (unsigned int)s->mux_value,
+            s->comment!=NULL?s->comment:"");
+
+    /* free temp. signal name */
+    if (outputSignalName != NULL) free(outputSignalName);
 }

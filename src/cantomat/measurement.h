@@ -35,12 +35,16 @@ typedef struct {
     double *value;
 } timeSeries_t;
 
+typedef struct {
+    unsigned int n;
+    unsigned int dlc;
+    unsigned char *data;
+} msg_series_t;
+
+
 typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 
-measurement_t *measurement_read(busAssignment_t *busAssignment,
-                                const char *filename,
-                                sint32 timeResolution,
-                                parserFunction_t parserFunction);
+int read_messages(const char *filename, parserFunction_t parserFunction);
 
 void measurement_free(measurement_t *m);
 

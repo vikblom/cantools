@@ -6,4 +6,4 @@ add_executable(cantomat busassignment.c cantomat.c matwrite.c
 target_compile_definitions(cantomat PRIVATE VERSION="0")
 target_link_libraries(cantomat
   -lmatio -lz
-  candbc canhash canasc canblf canclg canvsb)
+  candbc canhash canblf)

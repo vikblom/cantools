@@ -37,8 +37,7 @@ static void usage_error(void)
     exit(1);
 }
 
-static void
-help(void)
+static void help(void)
 {
     fprintf(stderr,
             "Usage: %s [OPTION] -d dbcfile\n"
@@ -61,15 +60,52 @@ help(void)
             program_name);
 }
 
-int
-main(int argc, char **argv)
+static int cantomat(char *inputFilename,
+                    parserFunction_t parserFunction,
+                    busAssignment_t *busAssignment,
+                    char *matFilename)
+{
+    // READ
+    measurement_t *measurement = malloc(sizeof(measurement_t));
+    if (!measurement) {
+        fprintf(stderr, "measurement_read(): can't allocate measurement structure\n");
+        return 1;
+    }
+
+    int err = read_messages(inputFilename, parserFunction);
+    if (err) {
+        fprintf(stderr, "Reading msgs from input file failed.\n");
+        return 1;
+    }
+
+    // DECODE
+    //measurement->timeSeriesHash = create_hashtable(16,
+    //                                               signalName_computeHash,
+    //                                               signalNames_equal);
+    //for(i = 0; i < messageProcCbData->busAssignment->n ; i++) {
+    //    busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
+    //
+    //    /* check if bus matches */
+    //    if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
+    //        if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
+
+
+    //WRITE
+    matWrite(measurement->timeSeriesHash, matFilename);
+
+    measurement_free(measurement);
+
+
+}
+
+
+int main(int argc, char **argv)
 {
     char *inputFilename = NULL;
     int inputFiles = 0;
     char *matFilename = NULL;
     busAssignment_t *busAssignment = busAssignment_create();
     int bus = -1;
-    measurement_t *measurement;
     int ret = 1;
     sint32 timeResolution = 0;
     parserFunction_t parserFunction = NULL;
@@ -110,21 +146,26 @@ main(int argc, char **argv)
         switch (c) {
         case 0:
             break;
-        case 'a':
-            inputFilename = optarg;
-            parserFunction = ascReader_processFile;
-            inputFiles++;
-            break;
         case 'B':
             inputFilename = optarg;
             parserFunction = blfReader_processFile;
             inputFiles++;
             break;
-        case 'c':
-            inputFilename = optarg;
-            parserFunction = clgReader_processFile;
-            inputFiles++;
-            break;
+        /* case 'a': */
+        /*     inputFilename = optarg; */
+        /*     parserFunction = ascReader_processFile; */
+        /*     inputFiles++; */
+        /*     break; */
+        /* case 'c': */
+        /*     inputFilename = optarg; */
+        /*     parserFunction = clgReader_processFile; */
+        /*     inputFiles++; */
+        /*     break; */
+        /* case 'v': */
+        /*     inputFilename = optarg; */
+        /*     parserFunction = vsbReader_processFile; */
+        /*     inputFiles++; */
+        /*     break; */
         case 'b':
             bus = atoi(optarg);
             break;
@@ -146,11 +187,6 @@ main(int argc, char **argv)
             break;
         case 't':
             timeResolution = atoi(optarg);
-            break;
-        case 'v':
-            inputFilename = optarg;
-            parserFunction = vsbReader_processFile;
-            inputFiles++;
             break;
         case 'h': help(); exit(0);   break;
         case '?':
@@ -193,26 +229,15 @@ main(int argc, char **argv)
     /* parse input file */
     if (verbose_flag) {
         if (inputFilename != NULL) {
-            fprintf(stderr,
-                    "Parsing input file %s\n",
-                    inputFilename?inputFilename:"<stdin>");
+            fprintf(stderr, "Parsing input file %s\n",
+                    inputFilename ? inputFilename : "<stdin>");
         }
     }
 
-    measurement = measurement_read(busAssignment,
-                                   inputFilename,
-                                   timeResolution,
-                                   parserFunction);
-
-    if (measurement != NULL) {
-        if (verbose_flag) {
-            fprintf(stderr, "Writing MAT file %s\n", matFilename);
-        }
-        matWrite(measurement->timeSeriesHash, matFilename);
-
-        measurement_free(measurement);
-    }
-    ret = 0;
+    ret = cantomat(inputFilename,
+                   parserFunction,
+                   busAssignment,
+                   matFilename);
 
 usage_error:
     busAssignment_free(busAssignment);
