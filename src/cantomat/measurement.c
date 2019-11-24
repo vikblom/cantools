@@ -75,7 +75,7 @@ static int can_equal(void *this, void *that)
     frame_key_t *this_p = (frame_key_t *) this;
     frame_key_t *that_p = (frame_key_t *) that;
 
-    return this_p->id == that_p->id;// && this_p->bus == that_p->bus;
+    return this_p->id == that_p->id && this_p->bus == that_p->bus;
 }
 
 
@@ -209,6 +209,7 @@ static message_t *find_msg_spec(frame_key_t *key, busAssignment_t *bus_lib,
 struct hashtable *can_decode(struct hashtable *can_hashmap,
                              busAssignment_t *bus_lib)
 {
+    static int already_defined_warn = 0;
     if (!can_hashmap || !hashtable_count(can_hashmap))
         return NULL;
 
@@ -231,7 +232,13 @@ struct hashtable *can_decode(struct hashtable *can_hashmap,
 
             char *signal_key = signalFormat_stringAppend(name_base, s->name);
             if (hashtable_search(ts_hashmap, signal_key)) {
-                fprintf(stderr, "Signal %s already defined!\n", signal_key);
+                if (!already_defined_warn) {
+                    fprintf(stderr, "WARNING! Signal %s already exists!\n"
+                            "Assign all dbc files to a specific channel to "
+                            "avoid using a single dbc on many channels.",
+                            signal_key);
+                    already_defined_warn = 1;
+                }
                 free(signal_key);
                 continue;
             }
@@ -246,6 +253,8 @@ struct hashtable *can_decode(struct hashtable *can_hashmap,
                 hashtable_insert(ts_hashmap,
                                  (void *) signal_key,
                                  (void *) timeSeries);
+            } else {
+                free(signal_key);
             }
         }
         free(name_base);
