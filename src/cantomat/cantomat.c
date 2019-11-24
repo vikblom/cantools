@@ -89,6 +89,8 @@ static int cantomat(char *inputFilename,
 
     destroy_messages(can_hashmap);
     destroy_timeseries(ts_hashmap);
+
+    return 0;
 }
 
 
