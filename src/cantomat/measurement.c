@@ -178,19 +178,18 @@ static void canframe_callback(canMessage_t *canMessage, void *cbData)
  * process CAN trace file with given bus assignment and output
  * signal format
  */
-int read_messages(const char *filename,
-                  parserFunction_t parserFunction,
-                  struct hashtable **hashmap_ptr)
+struct hashtable *read_messages(const char *filename,
+                                parserFunction_t parserFunction)
 {
     /* open input file */
     FILE *fp = filename ? fopen(filename, "rb") : stdin;
     if (!fp) {
         fprintf(stderr, "Opening input file failed.\n");
-        return 1;
+        return NULL;
     }
 
     // TODO: One hashmap for each channel to avoid collisions
-    *hashmap_ptr = create_hashtable(16, can_hash, can_equal);
+    struct hashtable *can_hashmap = create_hashtable(16, can_hash, can_equal);
 
 
     /*
@@ -201,14 +200,33 @@ int read_messages(const char *filename,
      * One of: blfReader_processFile or friends...
      */
     messageProcCbData_t messageProcCbData = {
-        *hashmap_ptr
+        can_hashmap
     };
     parserFunction(fp, canframe_callback, &messageProcCbData);
 
     if (filename != NULL)
         fclose(fp);
-    return 0;
+    return can_hashmap;
 }
+
+
+void destroy_messages(struct hashtable *can_hashmap)
+{
+    if (!can_hashmap)
+        return;
+
+    if (hashtable_count(can_hashmap)) {
+        struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
+        do {
+            msg_series_t *m = hashtable_iterator_value(itr);
+            free(m->data);
+            free(m);
+        } while (hashtable_iterator_advance(itr));
+        free(itr);
+    }
+    hashtable_destroy(can_hashmap, 0);
+}
+
 
 /* free measurement structure */
 void measurement_free(measurement_t *m)

@@ -45,9 +45,8 @@ typedef struct {
 
 typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 
-int read_messages(const char *filename,
-                  parserFunction_t parserFunction,
-                  struct hashtable **hashmap_dest);
+struct hashtable *read_messages(const char *filename,
+                  parserFunction_t parserFunction);
 
 void measurement_free(measurement_t *m);
 

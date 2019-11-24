@@ -66,15 +66,14 @@ static int cantomat(char *inputFilename,
                     char *matFilename)
 {
     // READ
-    struct hashtable *can_hashmap;
-    int err = read_messages(inputFilename, parserFunction, &can_hashmap);
-    if (err) {
+    struct hashtable *can_hashmap = read_messages(inputFilename,
+                                                  parserFunction);
+    if (!can_hashmap) {
         fprintf(stderr, "Reading msgs from input file failed.\n");
         return 1;
     }
 
 
-    hashtable_destroy(can_hashmap, 0);
 
     // DECODE
     //measurement->timeSeriesHash = create_hashtable(16,
@@ -87,6 +86,8 @@ static int cantomat(char *inputFilename,
     //    if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
     //        if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
 
+
+    destroy_messages(can_hashmap);
 
     //WRITE
     //matWrite(measurement->timeSeriesHash, matFilename);
