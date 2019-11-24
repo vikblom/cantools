@@ -57,15 +57,25 @@ static int signalNames_equal ( void *key1, void *key2 )
 }
 
 
+typedef struct {
+    uint32_t id;
+    uint8_t bus;
+} frame_key_t;
+
+
 static unsigned int can_hash(void *this)
 {
-    return *((uint32_t *) this);
+    frame_key_t *frame_key_p = (frame_key_t *) this;
+    return frame_key_p->id;
 }
 
 
 static int can_equal(void *this, void *that)
 {
-    return *((uint32_t *) this) == *((uint32_t *) that);
+    frame_key_t *this_p = (frame_key_t *) this;
+    frame_key_t *that_p = (frame_key_t *) that;
+
+    return this_p->id == that_p->id && this_p->bus == that_p->bus;
 }
 
 
@@ -142,36 +152,38 @@ static void canframe_callback(canMessage_t *canMessage, void *cbData)
     struct hashtable *can_hashmap = messageProcCbData->can_hashmap;
 
     /* look for signal in time series hash */
-    msg_series_t *msg_series = hashtable_search(can_hashmap,
-                                                (void *) &canMessage->id);
-    if (!msg_series) {
-        uint32_t *msg_key = malloc(sizeof(uint32_t));
-        *msg_key = canMessage->id;
+    frame_key_t frame_key = {canMessage->id, canMessage->bus};
+    msg_series_t *msg_series_p = hashtable_search(can_hashmap,
+                                                  (void *) &frame_key);
+    if (!msg_series_p) {
+        frame_key_t *frame_key_p = malloc(sizeof(frame_key_t));
+        frame_key_p->id = canMessage->id;
+        frame_key_p->bus = canMessage->bus;
 
-        msg_series = malloc(sizeof(msg_series_t));
-        msg_series->n = 0;
-        msg_series->cap = 0;
-        msg_series->dlc = canMessage->dlc;
-        msg_series->data = NULL;
+        msg_series_p = malloc(sizeof(msg_series_t));
+        msg_series_p->n = 0;
+        msg_series_p->cap = 0;
+        msg_series_p->dlc = canMessage->dlc;
+        msg_series_p->data = NULL;
 
         hashtable_insert(can_hashmap,
-                         (void *) msg_key,
-                         (void *) msg_series);
+                         (void *) frame_key_p,
+                         (void *) msg_series_p);
     }
 
-    if (msg_series->dlc != canMessage->dlc) {
+    if (msg_series_p->dlc != canMessage->dlc) {
         fprintf(stderr, "DLC MISMATCH!\n");
         return;
     }
 
-    if (msg_series->n + msg_series->dlc > msg_series->cap) {
-        msg_series->cap += 1024;
-        msg_series->data = realloc(msg_series->data, msg_series->cap);
+    if (msg_series_p->n + msg_series_p->dlc > msg_series_p->cap) {
+        msg_series_p->cap += 1024;
+        msg_series_p->data = realloc(msg_series_p->data, msg_series_p->cap);
     }
 
-    memcpy(msg_series->data + msg_series->n,
-           canMessage->byte_arr, msg_series->dlc);
-    msg_series->n += msg_series->dlc;
+    memcpy(msg_series_p->data + msg_series_p->n,
+           canMessage->byte_arr, msg_series_p->dlc);
+    msg_series_p->n += msg_series_p->dlc;
 }
 
 /*
