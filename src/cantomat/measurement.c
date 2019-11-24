@@ -23,9 +23,7 @@
 #include "signalformat.h"
 #include "hashtable.h"
 #include "hashtable_itr.h"
-#include "ascreader.h"
 #include "messagedecoder.h"
-#include "vsbreader.h"
 #include "dbcmodel.h"
 
 /* callback structure for timeSeries signal handler */
@@ -36,7 +34,7 @@ typedef struct {
 
 /* callback structure for timeSeries message handler */
 typedef struct {
-    struct hashtable *msg_hashmap;
+    struct hashtable *can_hashmap;
 } messageProcCbData_t;
 
 /* simple string hash function for signal names */
@@ -59,15 +57,15 @@ static int signalNames_equal ( void *key1, void *key2 )
 }
 
 
-static unsigned int msg_hash(void *this)
+static unsigned int can_hash(void *this)
 {
-    return *((uint32 *) this);
+    return *((uint32_t *) this);
 }
 
 
-static int msg_equal(void *this, void *that)
+static int can_equal(void *this, void *that)
 {
-    return *((uint32 *) this) == *((uint32 *) that);
+    return *((uint32_t *) this) == *((uint32_t *) that);
 }
 
 
@@ -138,53 +136,51 @@ static void signalProc_timeSeries(
 /*
  * callback function for processing a CAN message
  */
-static void message_callback(canMessage_t *canMessage, void *cbData)
+static void canframe_callback(canMessage_t *canMessage, void *cbData)
 {
     messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
+    struct hashtable *can_hashmap = messageProcCbData->can_hashmap;
 
-    /* lookup canMessage in message hash */
-    messageHashKey_t key = canMessage->id;
-    message_t *dbcMessage;
-    int i;
+    /* look for signal in time series hash */
+    msg_series_t *msg_series = hashtable_search(can_hashmap,
+                                                (void *) &canMessage->id);
+    if (!msg_series) {
+        uint32_t *msg_key = malloc(sizeof(uint32_t));
+        *msg_key = canMessage->id;
 
-    /* loop over all bus assigments */
-    for(i = 0; i < messageProcCbData->busAssignment->n ; i++) {
-        busAssignmentEntry_t *entry = &messageProcCbData->busAssignment->list[i];
+        msg_series = malloc(sizeof(msg_series_t));
+        msg_series->n = 0;
+        msg_series->cap = 0;
+        msg_series->dlc = canMessage->dlc;
+        msg_series->data = NULL;
 
-        /* check if bus matches */
-        if ((entry->bus == -1) || (entry->bus == canMessage->bus)) {
-            if (NULL != (dbcMessage = hashtable_search(entry->messageHash, &key))) {
-                /* found the message in the database */
-
-                /* setup and forward message prefix */
-                char *msg_prefix = signalFormat_stringAppend(entry->basename,
-                                                             dbcMessage->name);
-
-                /* call message decoder with time series storage callback */
-                signalProcCbData_t signalProcCbData = {
-                    messageProcCbData->measurement->timeSeriesHash,
-                    msg_prefix,
-                };
-
-                canMessage_decode(dbcMessage,
-                                  canMessage,
-                                  messageProcCbData->timeResolution,
-                                  signalProc_timeSeries,
-                                  &signalProcCbData);
-                free(msg_prefix);
-
-                /* end search if message was found */
-                break;
-            }
-        }
+        hashtable_insert(can_hashmap,
+                         (void *) msg_key,
+                         (void *) msg_series);
     }
+
+    if (msg_series->dlc != canMessage->dlc) {
+        fprintf(stderr, "DLC MISMATCH!\n");
+        return;
+    }
+
+    if (msg_series->n + msg_series->dlc > msg_series->cap) {
+        msg_series->cap += 1024;
+        msg_series->data = realloc(msg_series->data, msg_series->cap);
+    }
+
+    memcpy(msg_series->data + msg_series->n,
+           canMessage->byte_arr, msg_series->dlc);
+    msg_series->n += msg_series->dlc;
 }
 
 /*
  * process CAN trace file with given bus assignment and output
  * signal format
  */
-int read_messages(const char *filename, parserFunction_t parserFunction)
+int read_messages(const char *filename,
+                  parserFunction_t parserFunction,
+                  struct hashtable **hashmap_ptr)
 {
     /* open input file */
     FILE *fp = filename ? fopen(filename, "rb") : stdin;
@@ -194,7 +190,7 @@ int read_messages(const char *filename, parserFunction_t parserFunction)
     }
 
     // TODO: One hashmap for each channel to avoid collisions
-    struct hashtable *msg_hashmap = create_hashtable(16, msg_hash, msg_equal);
+    *hashmap_ptr = create_hashtable(16, can_hash, can_equal);
 
 
     /*
@@ -205,14 +201,13 @@ int read_messages(const char *filename, parserFunction_t parserFunction)
      * One of: blfReader_processFile or friends...
      */
     messageProcCbData_t messageProcCbData = {
-        msg_hashmap
+        *hashmap_ptr
     };
-    parserFunction(fp, message_callback, &messageProcCbData);
+    parserFunction(fp, canframe_callback, &messageProcCbData);
 
-    if (filename != NULL) {
+    if (filename != NULL)
         fclose(fp);
-    }
-    return measurement;
+    return 0;
 }
 
 /* free measurement structure */

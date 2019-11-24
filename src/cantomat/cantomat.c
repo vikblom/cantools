@@ -21,10 +21,10 @@
 #include "measurement.h"
 #include "busassignment.h"
 #include "matwrite.h"
-#include "ascreader.h"
-#include "clgreader.h"
+//#include "ascreader.h"
+//#include "clgreader.h"
 #include "blfreader.h"
-#include "vsbreader.h"
+//#include "vsbreader.h"
 
 int verbose_flag = 0;
 int debug_flag   = 0;
@@ -66,17 +66,15 @@ static int cantomat(char *inputFilename,
                     char *matFilename)
 {
     // READ
-    measurement_t *measurement = malloc(sizeof(measurement_t));
-    if (!measurement) {
-        fprintf(stderr, "measurement_read(): can't allocate measurement structure\n");
-        return 1;
-    }
-
-    int err = read_messages(inputFilename, parserFunction);
+    struct hashtable *can_hashmap;
+    int err = read_messages(inputFilename, parserFunction, &can_hashmap);
     if (err) {
         fprintf(stderr, "Reading msgs from input file failed.\n");
         return 1;
     }
+
+
+    hashtable_destroy(can_hashmap, 0);
 
     // DECODE
     //measurement->timeSeriesHash = create_hashtable(16,
@@ -91,11 +89,7 @@ static int cantomat(char *inputFilename,
 
 
     //WRITE
-    matWrite(measurement->timeSeriesHash, matFilename);
-
-    measurement_free(measurement);
-
-
+    //matWrite(measurement->timeSeriesHash, matFilename);
 }
 
 

@@ -6,5 +6,5 @@ add_library(canblf
   blfbuffer.c blfbuffer.h
   blfreader.c blfreader.h)
 target_link_libraries(canblf PRIVATE -lz)
-target_include_directories(canasc PUBLIC .) # TODO: Limit public
+target_include_directories(canblf PUBLIC .) # TODO: Limit public
 set_property(TARGET canblf PROPERTY C_STANDARD 90)

@@ -37,6 +37,7 @@ typedef struct {
 
 typedef struct {
     unsigned int n;
+    unsigned int cap;
     unsigned int dlc;
     unsigned char *data;
 } msg_series_t;
@@ -44,7 +45,9 @@ typedef struct {
 
 typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 
-int read_messages(const char *filename, parserFunction_t parserFunction);
+int read_messages(const char *filename,
+                  parserFunction_t parserFunction,
+                  struct hashtable **hashmap_dest);
 
 void measurement_free(measurement_t *m);
 
