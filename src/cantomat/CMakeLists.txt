@@ -5,5 +5,5 @@ add_executable(cantomat busassignment.c cantomat.c matwrite.c
   measurement.c messagedecoder.c messagehash.c signalformat.c)
 target_compile_definitions(cantomat PRIVATE VERSION="0")
 target_link_libraries(cantomat
-  -lmatio -lz
+  -l:libmatio.a -l:libhdf5.a -l:libszip.a -l:libz.a
   candbc canhash canblf)
