@@ -35,32 +35,16 @@ formats:
 
 Compiling native Windows exe with MSYS2
 ====================
-General deps
-- Install Msys2
-- Open Msys2 terminal
-- Update
-      pacman -Syu
-- Install everything you could need
-      pacman -Syu --needed base-devel make mingw-w64-x86_64-{toolchain,gcc,libtool,check,hdf5} zlib-devel wget
-
-Build only deps
-- Open Msys2 64-bit terminal
-- Grab specific matio version
-      wget 'http://downloads.sourceforge.net/matio/matio-1.5.10.tar.gz?use_mirror=' -O matio-1.5.10.tar.gz
-- Unpack:
-      tar xzf matio-1.5.10.tar.gz
-- Build and install matio:
-      cd matio-1.5.10
-      ./configure
-      make && make install
-
-Build cantomat
-- Open Msys2 64-bit terminal
-- Navigate to cantools folder and run:
+Use the "MSYS2 MINGW 64-bit" terminal
+- Install compiler toolchain
+      pacman -Syu --needed mingw-w64-x86_64-{gcc,cmake}
+- Install dependencies
+      pacman -Syu --needed mingw-w64-x86_64-{matio,zlib}
+- Build cantomat
       cmake -G"MSYS Makefiles" -B build .
       make -C build
 
- Compilation of cantools in Windows Subsystem for Linux (WSL)
+ Compiling in Windows Subsystem for Linux (WSL)
 ====================
 sudo apt-get install gcc libz-dev libmatio-dev pkg-config flex bison check libglib2.0 subversion automake
 git clone https://github.com/aheit/cantools cantools-code
