@@ -170,26 +170,40 @@ void destroy_messages(struct hashtable *msg_hashmap)
     hashtable_destroy(msg_hashmap, 0);
 }
 
-
+/*
+  Find the spec of a frame.
+  With preference for dbcs assigned to the frames bus specifically.
+*/
 static message_t *find_msg_spec(frame_key_t *key,
                                 busAssignment_t *bus_lib,
                                 char **dbcname_loc)
 {
     message_t *candidate, *match = NULL;
+    busAssignmentEntry_t entry;
 
     for (int i = 0; i < bus_lib->n ; i++) {
-        busAssignmentEntry_t entry = bus_lib->list[i];
-
-        /* check if bus matches and contains id */
-        if ((entry.bus == -1) || (entry.bus == key->bus)) {
+        entry = bus_lib->list[i];
+        if (entry.bus == key->bus) {
             if (candidate = hashtable_search(entry.messageHash, &key->id)) {
                 match = candidate;
                 *dbcname_loc = entry.basename;
-                break;
+                return match;
             }
         }
     }
-    return match;
+
+    for (int i = 0; i < bus_lib->n ; i++) {
+        entry = bus_lib->list[i];
+        if (entry.bus == -1) {
+            if (candidate = hashtable_search(entry.messageHash, &key->id)) {
+                match = candidate;
+                *dbcname_loc = entry.basename;
+                return match;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 
@@ -219,7 +233,7 @@ struct hashtable *can_decode(struct hashtable *msg_hashmap,
         char *name_base = signalFormat_stringAppend(dbcname, msg_spec->name);
         msg_series_t *val = hashtable_iterator_value(itr);
         signal_list_t *sl;
-        for(sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
+        for (sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
             const signal_t *const s = sl->signal;
 
             char *signal_key = signalFormat_stringAppend(name_base, s->name);
