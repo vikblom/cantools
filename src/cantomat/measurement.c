@@ -235,7 +235,7 @@ struct hashtable *can_decode(struct hashtable *can_hashmap,
                 if (!already_defined_warn) {
                     fprintf(stderr, "WARNING! Signal %s already exists!\n"
                             "Assign all dbc files to a specific channel to "
-                            "avoid using a single dbc on many channels.",
+                            "avoid using a single dbc on many channels.\n",
                             signal_key);
                     already_defined_warn = 1;
                 }
