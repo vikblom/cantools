@@ -26,16 +26,6 @@
 #include "messagedecoder.h"
 #include "dbcmodel.h"
 
-/* callback structure for timeSeries signal handler */
-typedef struct {
-    struct hashtable *timeSeriesHash;
-    char             *local_prefix;
-} signalProcCbData_t;
-
-/* callback structure for timeSeries message handler */
-typedef struct {
-    struct hashtable *can_hashmap;
-} messageProcCbData_t;
 
 /* simple string hash function for signal names */
 static unsigned int signalname_hash( void *k)
@@ -82,14 +72,13 @@ static int can_equal(void *this, void *that)
 /*
  * callback function for processing a CAN message
  */
-static void canframe_callback(canMessage_t *canMessage, void *cbData)
+static void canframe_callback(canMessage_t *canMessage, void *cb_data)
 {
-    messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
-    struct hashtable *can_hashmap = messageProcCbData->can_hashmap;
+    struct hashtable *msg_hashmap = (struct hashtable *) cb_data;
 
     /* look for signal in time series hash */
     frame_key_t frame_key = {canMessage->id, canMessage->bus};
-    msg_series_t *msg_series_p = hashtable_search(can_hashmap,
+    msg_series_t *msg_series_p = hashtable_search(msg_hashmap,
                                                   (void *) &frame_key);
     if (!msg_series_p) {
         frame_key_t *frame_key_p = malloc(sizeof(frame_key_t));
@@ -103,7 +92,7 @@ static void canframe_callback(canMessage_t *canMessage, void *cbData)
         msg_series_p->time = NULL;
         msg_series_p->dlc = canMessage->dlc;
 
-        hashtable_insert(can_hashmap,
+        hashtable_insert(msg_hashmap,
                          (void *) frame_key_p,
                          (void *) msg_series_p);
     }
@@ -146,7 +135,7 @@ struct hashtable *read_messages(const char *filename,
     }
 
     // TODO: One hashmap for each channel to avoid collisions
-    struct hashtable *can_hashmap = create_hashtable(16, can_hash, can_equal);
+    struct hashtable *msg_hashmap = create_hashtable(16, can_hash, can_equal);
 
     /*
      * Invoke the file format parser on file pointer fp.
@@ -155,24 +144,21 @@ struct hashtable *read_messages(const char *filename,
      * file stream
      * One of: blfReader_processFile or friends...
      */
-    messageProcCbData_t messageProcCbData = {
-        can_hashmap
-    };
-    parserFunction(fp, canframe_callback, &messageProcCbData);
+    parserFunction(fp, canframe_callback, msg_hashmap);
 
     if (filename != NULL)
         fclose(fp);
-    return can_hashmap;
+    return msg_hashmap;
 }
 
 
-void destroy_messages(struct hashtable *can_hashmap)
+void destroy_messages(struct hashtable *msg_hashmap)
 {
-    if (!can_hashmap)
+    if (!msg_hashmap)
         return;
 
-    if (hashtable_count(can_hashmap)) {
-        struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
+    if (hashtable_count(msg_hashmap)) {
+        struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
         do {
             msg_series_t *m = hashtable_iterator_value(itr);
             free(m->time);
@@ -181,11 +167,12 @@ void destroy_messages(struct hashtable *can_hashmap)
         } while (hashtable_iterator_advance(itr));
         free(itr);
     }
-    hashtable_destroy(can_hashmap, 0);
+    hashtable_destroy(msg_hashmap, 0);
 }
 
 
-static message_t *find_msg_spec(frame_key_t *key, busAssignment_t *bus_lib,
+static message_t *find_msg_spec(frame_key_t *key,
+                                busAssignment_t *bus_lib,
                                 char **dbcname_loc)
 {
     message_t *candidate, *match = NULL;
@@ -206,17 +193,22 @@ static message_t *find_msg_spec(frame_key_t *key, busAssignment_t *bus_lib,
 }
 
 
-struct hashtable *can_decode(struct hashtable *can_hashmap,
+/*
+  Goes through all msg_series_ts that are values in msg_hashmap.
+  Each is decoded into signals and put into a new hashmap.
+  The new hashmap is returned if succesfull, otherwise NULL.
+*/
+struct hashtable *can_decode(struct hashtable *msg_hashmap,
                              busAssignment_t *bus_lib)
 {
     static int already_defined_warn = 0;
-    if (!can_hashmap || !hashtable_count(can_hashmap))
+    if (!msg_hashmap || !hashtable_count(msg_hashmap))
         return NULL;
 
     struct hashtable *ts_hashmap = create_hashtable(16, signalname_hash,
                                                     signalname_equal);
 
-    struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
+    struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
     do {
         frame_key_t *frame_key = hashtable_iterator_key(itr);
         char *dbcname; // TODO: Find a smoother way to return this info.
@@ -314,36 +306,19 @@ void measurement_free(measurement_t *m)
 }
 
 
-/* used only for debugging: print data to stderr */
-static void signalProc_print(
-    const signal_t *s,
-    const canMessage_t *canMessage,
-    uint32 rawValue,
-    double physicalValue,
-    void *cbData)
-{
-    /* recover callback data */
-    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
-    char *outputSignalName =
-        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
-
-    fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)"
-            " [%f|%f] %d %ul \"%s\"\n",
-            outputSignalName,
-            physicalValue,
-            rawValue,
-            s->bit_start,
-            s->bit_len,
-            s->endianess,
-            s->signedness?'-':'+',
-            s->scale,
-            s->offset,
-            s->min,
-            s->max,
-            s->mux_type,
-            (unsigned int)s->mux_value,
-            s->comment!=NULL?s->comment:"");
-
-    /* free temp. signal name */
-    if (outputSignalName != NULL) free(outputSignalName);
-}
+/* fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)" */
+/*         " [%f|%f] %d %ul \"%s\"\n", */
+/*         outputSignalName, */
+/*         physicalValue, */
+/*         rawValue, */
+/*         s->bit_start, */
+/*         s->bit_len, */
+/*         s->endianess, */
+/*         s->signedness?'-':'+', */
+/*         s->scale, */
+/*         s->offset, */
+/*         s->min, */
+/*         s->max, */
+/*         s->mux_type, */
+/*         (unsigned int)s->mux_value, */
+/*         s->comment!=NULL?s->comment:""); */
