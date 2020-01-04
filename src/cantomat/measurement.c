@@ -53,14 +53,14 @@ typedef struct {
 } frame_key_t;
 
 
-static unsigned int can_hash(void *this)
+static unsigned int msg_hash(void *this)
 {
     frame_key_t *frame_key_p = (frame_key_t *) this;
     return frame_key_p->id;
 }
 
 
-static int can_equal(void *this, void *that)
+static int msg_equal(void *this, void *that)
 {
     frame_key_t *this_p = (frame_key_t *) this;
     frame_key_t *that_p = (frame_key_t *) that;
@@ -135,7 +135,7 @@ struct hashtable *read_messages(const char *filename,
     }
 
     // TODO: One hashmap for each channel to avoid collisions
-    struct hashtable *msg_hashmap = create_hashtable(16, can_hash, can_equal);
+    struct hashtable *msg_hashmap = create_hashtable(16, msg_hash, msg_equal);
 
     /*
      * Invoke the file format parser on file pointer fp.
