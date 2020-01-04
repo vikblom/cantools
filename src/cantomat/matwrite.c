@@ -107,7 +107,7 @@ int matWrite(struct hashtable *timeSeriesHash, const char *outFileName)
                                           MAT_C_DOUBLE, MAT_T_DOUBLE,
                                           2, dim,
                                           timeSeries->time,
-                                          0);//MAT_F_DONT_COPY_DATA);
+                                          MAT_F_DONT_COPY_DATA);
         Mat_VarSetStructFieldByName(topstruct, fieldnames[3], i, timevar);
 
         // Data vector

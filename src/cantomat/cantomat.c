@@ -76,19 +76,19 @@ static int cantomat(char *inputFilename,
         fprintf(stderr, "Read %d messages\n", hashtable_count(can_hashmap));
 
     // DECODE
-    struct hashtable *ts_hashmap = can_decode(can_hashmap, busAssignment);
-    if (!ts_hashmap) {
+    int signal_count;
+    signal_count = can_decode(can_hashmap, busAssignment);
+    if (signal_count < 0) {
         fprintf(stderr, "Reading signals from msgs failed.\n");
         return 1;
     }
     if (verbose_flag)
-        fprintf(stderr, "Decoded %d timeseries\n", hashtable_count(ts_hashmap));
+        fprintf(stderr, "Decoded %d timeseries\n", signal_count);
 
     // WRITE
-    matWrite(ts_hashmap, matFilename);
+    //matWrite(ts_hashmap, matFilename);
 
     destroy_messages(can_hashmap);
-    destroy_timeseries(ts_hashmap);
 
     return 0;
 }

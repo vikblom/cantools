@@ -41,6 +41,8 @@ typedef struct {
     unsigned char *data;
     double *time;
     unsigned int dlc;
+    char *dbcname;
+    struct hashtable *ts_hash; // name -> double * of n values
 } msg_series_t;
 
 
@@ -51,7 +53,6 @@ struct hashtable *read_messages(const char *filename,
 void destroy_messages(struct hashtable *can_hashmap);
 void destroy_timeseries(struct hashtable *ts_hashmap);
 
-struct hashtable *can_decode(struct hashtable *can_hashmap,
-                             busAssignment_t *bus_lib);
+int can_decode(struct hashtable *can_hashmap, busAssignment_t *bus_lib);
 
 #endif

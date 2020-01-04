@@ -28,20 +28,17 @@
 
 
 /* simple string hash function for signal names */
-static unsigned int signalname_hash( void *k)
+static unsigned int string_hash(void *k)
 {
     unsigned int hash = 0;
     int c;
-
-    while ((c = *(unsigned char *)k++)) {
+    while ((c = *(unsigned char *)k++))
         hash = c + (hash << 6) + (hash << 16) - hash;
-    }
-
     return hash;
 }
 
 /* string comparison function for signal names */
-static int signalname_equal ( void *key1, void *key2 )
+static int string_equal(void *key1, void *key2 )
 {
     return strcmp((char *)key1, (char *)key2) == 0;
 }
@@ -91,6 +88,8 @@ static void canframe_callback(canMessage_t *canMessage, void *cb_data)
         msg_series_p->data = NULL;
         msg_series_p->time = NULL;
         msg_series_p->dlc = canMessage->dlc;
+        msg_series_p->dbcname = NULL;
+        msg_series_p->ts_hash = NULL;
 
         hashtable_insert(msg_hashmap,
                          (void *) frame_key_p,
@@ -160,10 +159,14 @@ void destroy_messages(struct hashtable *msg_hashmap)
     if (hashtable_count(msg_hashmap)) {
         struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
         do {
-            msg_series_t *m = hashtable_iterator_value(itr);
-            free(m->time);
-            free(m->data);
-            free(m);
+            msg_series_t *msg = hashtable_iterator_value(itr);
+            free(msg->time);
+            free(msg->data);
+
+            if (msg->ts_hash)
+                hashtable_destroy(msg->ts_hash, 1);
+
+            free(msg);
         } while (hashtable_iterator_advance(itr));
         free(itr);
     }
@@ -209,70 +212,62 @@ static message_t *find_msg_spec(frame_key_t *key,
 
 /*
   Goes through all msg_series_ts that are values in msg_hashmap.
-  Each is decoded into signals and put into a new hashmap.
-  The new hashmap is returned if succesfull, otherwise NULL.
+  Populates the dbcname and ts_hash fields of each member.
+  Returns -1 on failure, otherwise the number of signals decoded.
 */
-struct hashtable *can_decode(struct hashtable *msg_hashmap,
-                             busAssignment_t *bus_lib)
+int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
 {
+    int count = 0;
     static int already_defined_warn = 0;
     if (!msg_hashmap || !hashtable_count(msg_hashmap))
-        return NULL;
-
-    struct hashtable *ts_hashmap = create_hashtable(16, signalname_hash,
-                                                    signalname_equal);
+        return -1;
 
     struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
     do {
         frame_key_t *frame_key = hashtable_iterator_key(itr);
-        char *dbcname; // TODO: Find a smoother way to return this info.
-        message_t *msg_spec = find_msg_spec(frame_key, bus_lib, &dbcname);
+        msg_series_t *msg = hashtable_iterator_value(itr);
+
+        message_t *msg_spec = find_msg_spec(frame_key,
+                                            bus_lib,
+                                            &msg->dbcname);
         if (!msg_spec)
             continue; // Decode not possible
 
-        char *name_base = signalFormat_stringAppend(dbcname, msg_spec->name);
-        msg_series_t *val = hashtable_iterator_value(itr);
+        msg->ts_hash = create_hashtable(16, string_hash, string_equal);
+
         signal_list_t *sl;
         for (sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
-            const signal_t *const s = sl->signal;
+            const signal_t *const spec = sl->signal;
 
-            char *signal_key = signalFormat_stringAppend(name_base, s->name);
-            if (hashtable_search(ts_hashmap, signal_key)) {
+            if (hashtable_search(msg->ts_hash, spec->name)) {
                 if (!already_defined_warn) {
                     fprintf(stderr, "WARNING! Signal %s already exists!\n"
-                            "Assign all dbc files to a specific channel to "
-                            "avoid using a single dbc on many channels.\n",
-                            signal_key);
+                            "Signalname used more than once in the same msg?\n"
+                            "Skipping this and all future duplicates!",
+                            spec->name);
                     already_defined_warn = 1;
                 }
-                free(signal_key);
                 continue;
             }
 
-            double *data;
-            if (data = signal_decode(s, val->data, val->dlc, val->n)) {
-                timeSeries_t *timeSeries = malloc(sizeof(timeSeries_t));
-                timeSeries->n = val->n;
-                timeSeries->time = val->time;
-                timeSeries->value = data;
-
-                hashtable_insert(ts_hashmap,
-                                 (void *) signal_key,
-                                 (void *) timeSeries);
-            } else {
-                free(signal_key);
+            double *data = signal_decode(spec, msg->data, msg->dlc, msg->n);
+            if (data) {
+                hashtable_insert(msg->ts_hash,
+                                 (void *) strdup(spec->name),
+                                 (void *) data);
             }
+
+            count++;
         }
-        free(name_base);
     } while (hashtable_iterator_advance(itr));
     free(itr);
 
-    return ts_hashmap;
+    return count;
 }
+
 
 void destroy_timeseries(struct hashtable *ts_hashmap)
 {
-
     if (!ts_hashmap)
         return;
 
@@ -280,6 +275,7 @@ void destroy_timeseries(struct hashtable *ts_hashmap)
         struct hashtable_itr *itr = hashtable_iterator(ts_hashmap);
         do {
             timeSeries_t *ts = hashtable_iterator_value(itr);
+            // ts->time is just a ref to the msg time
             free(ts->value);
             free(ts);
         } while (hashtable_iterator_advance(itr));
