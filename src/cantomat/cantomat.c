@@ -86,7 +86,7 @@ static int cantomat(char *inputFilename,
         fprintf(stderr, "Decoded %d timeseries\n", signal_count);
 
     // WRITE
-    //matWrite(ts_hashmap, matFilename);
+    matWrite(can_hashmap, signal_count, matFilename);
 
     destroy_messages(can_hashmap);
 

@@ -36,11 +36,17 @@ typedef struct {
 } timeSeries_t;
 
 typedef struct {
+    uint32_t id;
+    uint8_t bus;
+} frame_key_t;
+
+typedef struct {
     unsigned int n;
     unsigned int cap;
     unsigned char *data;
     double *time;
     unsigned int dlc;
+    // !!! TODO: char *name;
     char *dbcname;
     struct hashtable *ts_hash; // name -> double * of n values
 } msg_series_t;

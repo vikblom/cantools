@@ -20,6 +20,6 @@
 #include <stdio.h>
 #include "measurement.h"
 
-int matWrite(struct hashtable *timeSeriesHash, const char *filename);
+int matWrite(struct hashtable *msg_hash, int count, const char *filename);
 
 #endif

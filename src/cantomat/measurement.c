@@ -44,12 +44,6 @@ static int string_equal(void *key1, void *key2 )
 }
 
 
-typedef struct {
-    uint32_t id;
-    uint8_t bus;
-} frame_key_t;
-
-
 static unsigned int msg_hash(void *this)
 {
     frame_key_t *frame_key_p = (frame_key_t *) this;
