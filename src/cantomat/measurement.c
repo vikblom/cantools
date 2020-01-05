@@ -82,6 +82,7 @@ static void canframe_callback(canMessage_t *canMessage, void *cb_data)
         msg_series_p->data = NULL;
         msg_series_p->time = NULL;
         msg_series_p->dlc = canMessage->dlc;
+        msg_series_p->name = NULL;
         msg_series_p->dbcname = NULL;
         msg_series_p->ts_hash = NULL;
 
@@ -227,6 +228,7 @@ int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
         if (!msg_spec)
             continue; // Decode not possible
 
+        msg->name = msg_spec->name;
         msg->ts_hash = create_hashtable(16, string_hash, string_equal);
 
         signal_list_t *sl;

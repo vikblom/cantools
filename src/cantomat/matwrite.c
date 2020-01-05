@@ -37,6 +37,21 @@ const char *nextfield(const char *in, char *out)
 }
 
 
+void set_in_struct(matvar_t *top,
+                   int i,
+                   char name[],
+                   size_t size,
+                   enum matio_classes class,
+                   enum matio_types type,
+                   void *data,
+                   int opt)
+{
+    size_t dim[] = {1, size};
+    matvar_t *var = Mat_VarCreate(name, class, type, 2, dim, data, opt);
+    Mat_VarSetStructFieldByName(top, name, i, var);
+}
+
+
 /*
  * matWrite - write signals from measurement structure to MAT file
  */
@@ -63,8 +78,6 @@ int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
         fprintf(stderr, "error: could not create MAT struct\n");
         return 1;
     }
-
-    char tmp[] = "FOO";
 
     /* Iterator constructor only returns a valid iterator if
      * the hashtable is not empty */
@@ -103,11 +116,11 @@ int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
             Mat_VarSetStructFieldByName(topstruct, fieldnames[1], i, var);
 
             // Message name
-            dim[1] = strlen(tmp);
+            dim[1] = strlen(msg->name);
             var = Mat_VarCreate(fieldnames[2],
                                 MAT_C_CHAR, MAT_T_UTF8,
                                 2, dim,
-                                tmp, MAT_F_DONT_COPY_DATA);
+                                msg->name, MAT_F_DONT_COPY_DATA);
             Mat_VarSetStructFieldByName(topstruct, fieldnames[2], i, var);
 
             // Signal name

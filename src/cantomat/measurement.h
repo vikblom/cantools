@@ -46,7 +46,7 @@ typedef struct {
     unsigned char *data;
     double *time;
     unsigned int dlc;
-    // !!! TODO: char *name;
+    char *name;
     char *dbcname;
     struct hashtable *ts_hash; // name -> double * of n values
 } msg_series_t;
