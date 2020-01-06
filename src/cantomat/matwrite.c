@@ -27,28 +27,41 @@
 #include "hashtable_itr.h"
 
 
-// Basically a custom version of strchr for periods.
-const char *nextfield(const char *in, char *out)
-{
-    while (*in && *in != '/')
-        *out++ = *in++;
-    *out = '\0';
-    return *in == '/' ? in+1 : in;
-}
+// TODO: Use a "spec" struct instead. Also include function handle?
+const char *FIELD_NAMES[6] = {"bus", "dbc", "msg", "signal", "time", "data"};
+const enum matio_classes FIELD_CLASSES[] = {MAT_C_UINT8,
+                                            MAT_C_CHAR,
+                                            MAT_C_CHAR,
+                                            MAT_C_CHAR,
+                                            MAT_C_DOUBLE,
+                                            MAT_C_DOUBLE};
+const enum matio_types FIELD_TYPES[] = {MAT_T_UINT8,
+                                        MAT_T_UTF8,
+                                        MAT_T_UTF8,
+                                        MAT_T_UTF8,
+                                        MAT_T_DOUBLE,
+                                        MAT_T_DOUBLE};
+const int FIELD_OPTS[] = {0, 0, 0, 0, MAT_F_DONT_COPY_DATA, MAT_F_DONT_COPY_DATA};
 
 
-void set_in_struct(matvar_t *top,
-                   int i,
-                   char name[],
-                   size_t size,
-                   enum matio_classes class,
-                   enum matio_types type,
-                   void *data,
-                   int opt)
+
+
+void set_in_struct_array(matvar_t *struct_array,
+                         int nth_field,
+                         int array_index,
+                         size_t size,
+                         void *data)
 {
     size_t dim[] = {1, size};
-    matvar_t *var = Mat_VarCreate(name, class, type, 2, dim, data, opt);
-    Mat_VarSetStructFieldByName(top, name, i, var);
+    matvar_t *var = Mat_VarCreate(FIELD_NAMES[nth_field],
+                                  FIELD_CLASSES[nth_field],
+                                  FIELD_TYPES[nth_field],
+                                  2, dim, data,
+                                  FIELD_OPTS[nth_field]);
+    Mat_VarSetStructFieldByName(struct_array,
+                                FIELD_NAMES[nth_field],
+                                array_index,
+                                var);
 }
 
 
@@ -97,56 +110,33 @@ int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
             char *signame = hashtable_iterator_key(sig_itr);
             timeSeries_t *sigdata = hashtable_iterator_value(sig_itr);
 
-
             // Channel number
-            dim[1] = 1;
-            var = Mat_VarCreate(fieldnames[0],
-                                MAT_C_UINT8, MAT_T_UINT8,
-                                2, dim,
-                                &msg_key->bus, 0);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[0], i, var);
-
+            set_in_struct_array(topstruct, 0, i, 1, &msg_key->bus);
 
             // DBC name
-            dim[1] = strlen(msg->dbcname);
-            var = Mat_VarCreate(fieldnames[1],
-                                MAT_C_CHAR, MAT_T_UTF8,
-                                2, dim,
-                                msg->dbcname, 0);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[1], i, var);
+            set_in_struct_array(topstruct, 1, i,
+                                strlen(msg->dbcname),
+                                msg->dbcname);
 
             // Message name
-            dim[1] = strlen(msg->name);
-            var = Mat_VarCreate(fieldnames[2],
-                                MAT_C_CHAR, MAT_T_UTF8,
-                                2, dim,
-                                msg->name, MAT_F_DONT_COPY_DATA);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[2], i, var);
+            set_in_struct_array(topstruct, 2, i,
+                                strlen(msg->name),
+                                msg->name);
 
             // Signal name
-            dim[1] = strlen(signame);
-            var = Mat_VarCreate(fieldnames[3],
-                                MAT_C_CHAR, MAT_T_UTF8,
-                                2, dim,
-                                signame, 0);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[3], i, var);
+            set_in_struct_array(topstruct, 3, i,
+                                strlen(signame),
+                                signame);
 
             // Time vector
-            dim[1] = msg->n;
-            var = Mat_VarCreate(fieldnames[4],
-                                MAT_C_DOUBLE, MAT_T_DOUBLE,
-                                2, dim,
-                                msg->time,
-                                MAT_F_DONT_COPY_DATA);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[4], i, var);
+            set_in_struct_array(topstruct, 4, i,
+                                msg->n,
+                                msg->time);
 
             // Data vector
-            var = Mat_VarCreate(fieldnames[5],
-                                MAT_C_DOUBLE, MAT_T_DOUBLE,
-                                2, dim,
-                                sigdata,
-                                MAT_F_DONT_COPY_DATA);
-            Mat_VarSetStructFieldByName(topstruct, fieldnames[5], i, var);
+            set_in_struct_array(topstruct, 5, i,
+                                msg->n,
+                                sigdata);
 
             i++;
 
