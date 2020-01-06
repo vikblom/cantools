@@ -4,15 +4,16 @@ from scipy.io import loadmat
 
 
 def keyer(tup):
-    channel = tup[0].tostring().decode('utf32')
-    message = tup[1].tostring().decode('utf32')
-    signal = tup[2].tostring().decode('utf32')
-    return f"{channel}::{message}::{signal}"
+    bus = str(tup[0])
+    channel = tup[1].tostring().decode('utf32')
+    message = tup[2].tostring().decode('utf32')
+    signal = tup[3].tostring().decode('utf32')
+    return f"{bus}::{channel}::{message}::{signal}"
 
 
 def valuer(tup):
-    time = tup[3].squeeze()
-    data = tup[4].squeeze()
+    time = tup[4].squeeze()
+    data = tup[5].squeeze()
     return (time, data)
 
 
