@@ -37,6 +37,7 @@ static unsigned int string_hash(void *k)
     return hash;
 }
 
+
 /* string comparison function for signal names */
 static int string_equal(void *key1, void *key2 )
 {
@@ -114,6 +115,7 @@ static void canframe_callback(canMessage_t *canMessage, void *cb_data)
     msg_series_p->n++;
 }
 
+
 /*
  * process CAN trace file with given bus assignment and output
  * signal format
@@ -167,6 +169,7 @@ void destroy_messages(struct hashtable *msg_hashmap)
     }
     hashtable_destroy(msg_hashmap, 0);
 }
+
 
 /*
   Find the spec of a frame.
@@ -260,71 +263,3 @@ int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
 
     return count;
 }
-
-
-void destroy_timeseries(struct hashtable *ts_hashmap)
-{
-    if (!ts_hashmap)
-        return;
-
-    if (hashtable_count(ts_hashmap)) {
-        struct hashtable_itr *itr = hashtable_iterator(ts_hashmap);
-        do {
-            timeSeries_t *ts = hashtable_iterator_value(itr);
-            // ts->time is just a ref to the msg time
-            free(ts->value);
-            free(ts);
-        } while (hashtable_iterator_advance(itr));
-        free(itr);
-    }
-    hashtable_destroy(ts_hashmap, 0);
-}
-
-
-
-/* free measurement structure */
-void measurement_free(measurement_t *m)
-{
-    // fprintf(stderr,"freeing %p (measurement)\n",m);
-    if (m != NULL) {
-
-        /* free time series */
-        struct hashtable *timeSeriesHash = m->timeSeriesHash;
-        struct hashtable_itr *itr;
-
-        /* loop over all time series in hash */
-        if (hashtable_count(timeSeriesHash) > 0) {
-            itr = hashtable_iterator(timeSeriesHash);
-            do {
-                char         *signalName = hashtable_iterator_key(itr);
-                timeSeries_t *timeSeries = hashtable_iterator_value(itr);
-
-                free(timeSeries->time);
-                free(timeSeries->value);
-            } while (hashtable_iterator_advance(itr));
-            free(itr);
-        }
-
-        /* free key and value (timeSeries_t) and hashTable */
-        hashtable_destroy(m->timeSeriesHash, 1);
-        free(m);
-    }
-}
-
-
-/* fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)" */
-/*         " [%f|%f] %d %ul \"%s\"\n", */
-/*         outputSignalName, */
-/*         physicalValue, */
-/*         rawValue, */
-/*         s->bit_start, */
-/*         s->bit_len, */
-/*         s->endianess, */
-/*         s->signedness?'-':'+', */
-/*         s->scale, */
-/*         s->offset, */
-/*         s->min, */
-/*         s->max, */
-/*         s->mux_type, */
-/*         (unsigned int)s->mux_value, */
-/*         s->comment!=NULL?s->comment:""); */

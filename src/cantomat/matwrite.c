@@ -108,7 +108,7 @@ int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
         struct hashtable_itr *sig_itr = hashtable_iterator(msg->ts_hash);
         do {
             char *signame = hashtable_iterator_key(sig_itr);
-            timeSeries_t *sigdata = hashtable_iterator_value(sig_itr);
+            double *sigdata = hashtable_iterator_value(sig_itr);
 
             // Channel number
             set_in_struct_array(topstruct, 0, i, 1, &msg_key->bus);

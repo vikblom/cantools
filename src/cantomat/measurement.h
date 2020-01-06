@@ -30,12 +30,6 @@ typedef struct {
 } measurement_t;
 
 typedef struct {
-    unsigned int n;
-    double *time;
-    double *value;
-} timeSeries_t;
-
-typedef struct {
     uint32_t id;
     uint8_t bus;
 } frame_key_t;
@@ -57,7 +51,6 @@ typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 struct hashtable *read_messages(const char *filename,
                                 parserFunction_t parserFunction);
 void destroy_messages(struct hashtable *can_hashmap);
-void destroy_timeseries(struct hashtable *ts_hashmap);
 
 int can_decode(struct hashtable *can_hashmap, busAssignment_t *bus_lib);
 
