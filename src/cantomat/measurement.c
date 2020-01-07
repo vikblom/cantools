@@ -254,9 +254,8 @@ int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
                 hashtable_insert(msg->ts_hash,
                                  (void *) strdup(spec->name),
                                  (void *) data);
+                count++;
             }
-
-            count++;
         }
     } while (hashtable_iterator_advance(itr));
     free(itr);
