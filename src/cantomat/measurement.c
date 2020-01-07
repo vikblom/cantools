@@ -26,51 +26,33 @@
 #include "messagedecoder.h"
 #include "dbcmodel.h"
 
-/* callback structure for timeSeries signal handler */
-typedef struct {
-    struct hashtable *timeSeriesHash;
-    char             *local_prefix;
-} signalProcCbData_t;
-
-/* callback structure for timeSeries message handler */
-typedef struct {
-    struct hashtable *can_hashmap;
-} messageProcCbData_t;
 
 /* simple string hash function for signal names */
-static unsigned int signalname_hash( void *k)
+static unsigned int string_hash(void *k)
 {
     unsigned int hash = 0;
     int c;
-
-    while ((c = *(unsigned char *)k++)) {
+    while ((c = *(unsigned char *)k++))
         hash = c + (hash << 6) + (hash << 16) - hash;
-    }
-
     return hash;
 }
 
+
 /* string comparison function for signal names */
-static int signalname_equal ( void *key1, void *key2 )
+static int string_equal(void *key1, void *key2 )
 {
     return strcmp((char *)key1, (char *)key2) == 0;
 }
 
 
-typedef struct {
-    uint32_t id;
-    uint8_t bus;
-} frame_key_t;
-
-
-static unsigned int can_hash(void *this)
+static unsigned int msg_hash(void *this)
 {
     frame_key_t *frame_key_p = (frame_key_t *) this;
     return frame_key_p->id;
 }
 
 
-static int can_equal(void *this, void *that)
+static int msg_equal(void *this, void *that)
 {
     frame_key_t *this_p = (frame_key_t *) this;
     frame_key_t *that_p = (frame_key_t *) that;
@@ -82,14 +64,13 @@ static int can_equal(void *this, void *that)
 /*
  * callback function for processing a CAN message
  */
-static void canframe_callback(canMessage_t *canMessage, void *cbData)
+static void canframe_callback(canMessage_t *canMessage, void *cb_data)
 {
-    messageProcCbData_t *messageProcCbData = (messageProcCbData_t *)cbData;
-    struct hashtable *can_hashmap = messageProcCbData->can_hashmap;
+    struct hashtable *msg_hashmap = (struct hashtable *) cb_data;
 
     /* look for signal in time series hash */
     frame_key_t frame_key = {canMessage->id, canMessage->bus};
-    msg_series_t *msg_series_p = hashtable_search(can_hashmap,
+    msg_series_t *msg_series_p = hashtable_search(msg_hashmap,
                                                   (void *) &frame_key);
     if (!msg_series_p) {
         frame_key_t *frame_key_p = malloc(sizeof(frame_key_t));
@@ -102,8 +83,11 @@ static void canframe_callback(canMessage_t *canMessage, void *cbData)
         msg_series_p->data = NULL;
         msg_series_p->time = NULL;
         msg_series_p->dlc = canMessage->dlc;
+        msg_series_p->name = NULL;
+        msg_series_p->dbcname = NULL;
+        msg_series_p->ts_hash = NULL;
 
-        hashtable_insert(can_hashmap,
+        hashtable_insert(msg_hashmap,
                          (void *) frame_key_p,
                          (void *) msg_series_p);
     }
@@ -131,6 +115,7 @@ static void canframe_callback(canMessage_t *canMessage, void *cbData)
     msg_series_p->n++;
 }
 
+
 /*
  * process CAN trace file with given bus assignment and output
  * signal format
@@ -146,7 +131,7 @@ struct hashtable *read_messages(const char *filename,
     }
 
     // TODO: One hashmap for each channel to avoid collisions
-    struct hashtable *can_hashmap = create_hashtable(16, can_hash, can_equal);
+    struct hashtable *msg_hashmap = create_hashtable(16, msg_hash, msg_equal);
 
     /*
      * Invoke the file format parser on file pointer fp.
@@ -155,195 +140,126 @@ struct hashtable *read_messages(const char *filename,
      * file stream
      * One of: blfReader_processFile or friends...
      */
-    messageProcCbData_t messageProcCbData = {
-        can_hashmap
-    };
-    parserFunction(fp, canframe_callback, &messageProcCbData);
+    parserFunction(fp, canframe_callback, msg_hashmap);
 
     if (filename != NULL)
         fclose(fp);
-    return can_hashmap;
+    return msg_hashmap;
 }
 
 
-void destroy_messages(struct hashtable *can_hashmap)
+void destroy_messages(struct hashtable *msg_hashmap)
 {
-    if (!can_hashmap)
+    if (!msg_hashmap)
         return;
 
-    if (hashtable_count(can_hashmap)) {
-        struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
+    if (hashtable_count(msg_hashmap)) {
+        struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
         do {
-            msg_series_t *m = hashtable_iterator_value(itr);
-            free(m->time);
-            free(m->data);
-            free(m);
+            msg_series_t *msg = hashtable_iterator_value(itr);
+            free(msg->time);
+            free(msg->data);
+
+            if (msg->ts_hash)
+                hashtable_destroy(msg->ts_hash, 1);
+
+            free(msg);
         } while (hashtable_iterator_advance(itr));
         free(itr);
     }
-    hashtable_destroy(can_hashmap, 0);
+    hashtable_destroy(msg_hashmap, 0);
 }
 
 
-static message_t *find_msg_spec(frame_key_t *key, busAssignment_t *bus_lib,
+/*
+  Find the spec of a frame.
+  With preference for dbcs assigned to the frames bus specifically.
+*/
+static message_t *find_msg_spec(frame_key_t *key,
+                                busAssignment_t *bus_lib,
                                 char **dbcname_loc)
 {
     message_t *candidate, *match = NULL;
+    busAssignmentEntry_t entry;
 
     for (int i = 0; i < bus_lib->n ; i++) {
-        busAssignmentEntry_t entry = bus_lib->list[i];
-
-        /* check if bus matches and contains id */
-        if ((entry.bus == -1) || (entry.bus == key->bus)) {
+        entry = bus_lib->list[i];
+        if (entry.bus == key->bus) {
             if (candidate = hashtable_search(entry.messageHash, &key->id)) {
                 match = candidate;
                 *dbcname_loc = entry.basename;
-                break;
+                return match;
             }
         }
     }
-    return match;
+
+    for (int i = 0; i < bus_lib->n ; i++) {
+        entry = bus_lib->list[i];
+        if (entry.bus == -1) {
+            if (candidate = hashtable_search(entry.messageHash, &key->id)) {
+                match = candidate;
+                *dbcname_loc = entry.basename;
+                return match;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 
-struct hashtable *can_decode(struct hashtable *can_hashmap,
-                             busAssignment_t *bus_lib)
+/*
+  Goes through all msg_series_ts that are values in msg_hashmap.
+  Populates the dbcname and ts_hash fields of each member.
+  Returns -1 on failure, otherwise the number of signals decoded.
+*/
+int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
 {
+    int count = 0;
     static int already_defined_warn = 0;
-    if (!can_hashmap || !hashtable_count(can_hashmap))
-        return NULL;
+    if (!msg_hashmap || !hashtable_count(msg_hashmap))
+        return -1;
 
-    struct hashtable *ts_hashmap = create_hashtable(16, signalname_hash,
-                                                    signalname_equal);
-
-    struct hashtable_itr *itr = hashtable_iterator(can_hashmap);
+    struct hashtable_itr *itr = hashtable_iterator(msg_hashmap);
     do {
         frame_key_t *frame_key = hashtable_iterator_key(itr);
-        char *dbcname; // TODO: Find a smoother way to return this info.
-        message_t *msg_spec = find_msg_spec(frame_key, bus_lib, &dbcname);
+        msg_series_t *msg = hashtable_iterator_value(itr);
+
+        message_t *msg_spec = find_msg_spec(frame_key,
+                                            bus_lib,
+                                            &msg->dbcname);
         if (!msg_spec)
             continue; // Decode not possible
 
-        char *name_base = signalFormat_stringAppend(dbcname, msg_spec->name);
-        msg_series_t *val = hashtable_iterator_value(itr);
-        signal_list_t *sl;
-        for(sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
-            const signal_t *const s = sl->signal;
+        msg->name = msg_spec->name;
+        msg->ts_hash = create_hashtable(16, string_hash, string_equal);
 
-            char *signal_key = signalFormat_stringAppend(name_base, s->name);
-            if (hashtable_search(ts_hashmap, signal_key)) {
+        signal_list_t *sl;
+        for (sl = msg_spec->signal_list; sl != NULL; sl = sl->next) {
+            const signal_t *const spec = sl->signal;
+
+            if (hashtable_search(msg->ts_hash, spec->name)) {
                 if (!already_defined_warn) {
                     fprintf(stderr, "WARNING! Signal %s already exists!\n"
-                            "Assign all dbc files to a specific channel to "
-                            "avoid using a single dbc on many channels.",
-                            signal_key);
+                            "Signalname used more than once in the same msg?\n"
+                            "Skipping this and all future duplicates!",
+                            spec->name);
                     already_defined_warn = 1;
                 }
-                free(signal_key);
                 continue;
             }
 
-            double *data;
-            if (data = signal_decode(s, val->data, val->dlc, val->n)) {
-                timeSeries_t *timeSeries = malloc(sizeof(timeSeries_t));
-                timeSeries->n = val->n;
-                timeSeries->time = val->time;
-                timeSeries->value = data;
-
-                hashtable_insert(ts_hashmap,
-                                 (void *) signal_key,
-                                 (void *) timeSeries);
-            } else {
-                free(signal_key);
+            double *data = signal_decode(spec, msg->data, msg->dlc, msg->n);
+            if (data) {
+                hashtable_insert(msg->ts_hash,
+                                 (void *) strdup(spec->name),
+                                 (void *) data);
             }
+
+            count++;
         }
-        free(name_base);
     } while (hashtable_iterator_advance(itr));
     free(itr);
 
-    return ts_hashmap;
-}
-
-void destroy_timeseries(struct hashtable *ts_hashmap)
-{
-
-    if (!ts_hashmap)
-        return;
-
-    if (hashtable_count(ts_hashmap)) {
-        struct hashtable_itr *itr = hashtable_iterator(ts_hashmap);
-        do {
-            timeSeries_t *ts = hashtable_iterator_value(itr);
-            free(ts->value);
-            free(ts);
-        } while (hashtable_iterator_advance(itr));
-        free(itr);
-    }
-    hashtable_destroy(ts_hashmap, 0);
-}
-
-
-
-/* free measurement structure */
-void measurement_free(measurement_t *m)
-{
-    // fprintf(stderr,"freeing %p (measurement)\n",m);
-    if (m != NULL) {
-
-        /* free time series */
-        struct hashtable *timeSeriesHash = m->timeSeriesHash;
-        struct hashtable_itr *itr;
-
-        /* loop over all time series in hash */
-        if (hashtable_count(timeSeriesHash) > 0) {
-            itr = hashtable_iterator(timeSeriesHash);
-            do {
-                char         *signalName = hashtable_iterator_key(itr);
-                timeSeries_t *timeSeries = hashtable_iterator_value(itr);
-
-                free(timeSeries->time);
-                free(timeSeries->value);
-            } while (hashtable_iterator_advance(itr));
-            free(itr);
-        }
-
-        /* free key and value (timeSeries_t) and hashTable */
-        hashtable_destroy(m->timeSeriesHash, 1);
-        free(m);
-    }
-}
-
-
-/* used only for debugging: print data to stderr */
-static void signalProc_print(
-    const signal_t *s,
-    const canMessage_t *canMessage,
-    uint32 rawValue,
-    double physicalValue,
-    void *cbData)
-{
-    /* recover callback data */
-    signalProcCbData_t *signalProcCbData = (signalProcCbData_t *)cbData;
-    char *outputSignalName =
-        signalFormat_stringAppend(signalProcCbData->local_prefix, s->name);
-
-    fprintf(stderr,"   %s\t=%f ~ raw=%u\t~ %d|%d@%d%c (%f,%f)"
-            " [%f|%f] %d %ul \"%s\"\n",
-            outputSignalName,
-            physicalValue,
-            rawValue,
-            s->bit_start,
-            s->bit_len,
-            s->endianess,
-            s->signedness?'-':'+',
-            s->scale,
-            s->offset,
-            s->min,
-            s->max,
-            s->mux_type,
-            (unsigned int)s->mux_value,
-            s->comment!=NULL?s->comment:"");
-
-    /* free temp. signal name */
-    if (outputSignalName != NULL) free(outputSignalName);
+    return count;
 }

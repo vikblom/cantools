@@ -30,10 +30,9 @@ typedef struct {
 } measurement_t;
 
 typedef struct {
-    unsigned int n;
-    double *time;
-    double *value;
-} timeSeries_t;
+    uint32_t id;
+    uint8_t bus;
+} frame_key_t;
 
 typedef struct {
     unsigned int n;
@@ -41,6 +40,9 @@ typedef struct {
     unsigned char *data;
     double *time;
     unsigned int dlc;
+    char *name;
+    char *dbcname;
+    struct hashtable *ts_hash; // name -> double * of n values
 } msg_series_t;
 
 
@@ -49,9 +51,7 @@ typedef void (* parserFunction_t)(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 struct hashtable *read_messages(const char *filename,
                                 parserFunction_t parserFunction);
 void destroy_messages(struct hashtable *can_hashmap);
-void destroy_timeseries(struct hashtable *ts_hashmap);
 
-struct hashtable *can_decode(struct hashtable *can_hashmap,
-                             busAssignment_t *bus_lib);
+int can_decode(struct hashtable *can_hashmap, busAssignment_t *bus_lib);
 
 #endif

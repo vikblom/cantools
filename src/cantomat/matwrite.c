@@ -27,23 +27,51 @@
 #include "hashtable_itr.h"
 
 
-// Basically a custom version of strchr for periods.
-const char *nextfield(const char *in, char *out)
+// TODO: Use a "spec" struct instead. Also include function handle?
+const char *FIELD_NAMES[6] = {"bus", "dbc", "msg", "signal", "time", "data"};
+const enum matio_classes FIELD_CLASSES[] = {MAT_C_UINT8,
+                                            MAT_C_CHAR,
+                                            MAT_C_CHAR,
+                                            MAT_C_CHAR,
+                                            MAT_C_DOUBLE,
+                                            MAT_C_DOUBLE};
+const enum matio_types FIELD_TYPES[] = {MAT_T_UINT8,
+                                        MAT_T_UTF8,
+                                        MAT_T_UTF8,
+                                        MAT_T_UTF8,
+                                        MAT_T_DOUBLE,
+                                        MAT_T_DOUBLE};
+const int FIELD_OPTS[] = {0, 0, 0, 0, MAT_F_DONT_COPY_DATA, MAT_F_DONT_COPY_DATA};
+
+
+
+
+void set_in_struct_array(matvar_t *struct_array,
+                         int nth_field,
+                         int array_index,
+                         size_t size,
+                         void *data)
 {
-    while (*in && *in != '/')
-        *out++ = *in++;
-    *out = '\0';
-    return *in == '/' ? in+1 : in;
+    size_t dim[] = {1, size};
+    matvar_t *var = Mat_VarCreate(FIELD_NAMES[nth_field],
+                                  FIELD_CLASSES[nth_field],
+                                  FIELD_TYPES[nth_field],
+                                  2, dim, data,
+                                  FIELD_OPTS[nth_field]);
+    Mat_VarSetStructFieldByName(struct_array,
+                                FIELD_NAMES[nth_field],
+                                array_index,
+                                var);
 }
 
 
 /*
  * matWrite - write signals from measurement structure to MAT file
  */
-int matWrite(struct hashtable *timeSeriesHash, const char *outFileName)
+int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
 {
     /* loop over all time series */
-    if (hashtable_count(timeSeriesHash) == 0) {
+    if (hashtable_count(msg_hash) == 0 || count == 0) {
         fprintf(stderr, "error: measurement empty, nothing to write\n");
         return 1;
     }
@@ -54,74 +82,69 @@ int matWrite(struct hashtable *timeSeriesHash, const char *outFileName)
         return 1;
     }
 
-    const char *fieldnames[5] = {"dbc", "msg", "signal", "time", "data"};
-    size_t structdim[2] = {1, hashtable_count(timeSeriesHash)};
+    const char *fieldnames[6] = {"bus", "dbc", "msg", "signal", "time", "data"};
+    size_t structdim[2] = {1, count};
     matvar_t* topstruct = Mat_VarCreateStruct("data",
                                               2, structdim,
-                                              fieldnames, 5);
+                                              fieldnames, 6);
     if (topstruct == NULL) {
         fprintf(stderr, "error: could not create MAT struct\n");
         return 1;
     }
 
-
     /* Iterator constructor only returns a valid iterator if
      * the hashtable is not empty */
     int i = 0;
-    struct hashtable_itr *itr = hashtable_iterator(timeSeriesHash);
+    size_t dim[] = {1, 1};
+    matvar_t *var;
+    struct hashtable_itr *msg_itr = hashtable_iterator(msg_hash);
     do {
-        char BUFFER[128];
-        const char *signal_key = hashtable_iterator_key(itr);
-        timeSeries_t *timeSeries = hashtable_iterator_value(itr);
+        frame_key_t *msg_key = hashtable_iterator_key(msg_itr);
+        msg_series_t *msg = hashtable_iterator_value(msg_itr);
 
-        // Signal name
-        signal_key = nextfield(signal_key, BUFFER);
-        size_t sigdim[2] = {1, strlen(BUFFER)};
-        matvar_t *sigvar = Mat_VarCreate(fieldnames[0],
-                                         MAT_C_CHAR, MAT_T_UTF8,
-                                         2, sigdim,
-                                         BUFFER, 0);
-        Mat_VarSetStructFieldByName(topstruct, fieldnames[0], i, sigvar);
+        if (!msg->ts_hash || hashtable_count(msg->ts_hash) == 0)
+            continue;
 
-        // Message name
-        signal_key = nextfield(signal_key, BUFFER);
-        size_t msgdim[2] = {1, strlen(BUFFER)};
-        matvar_t *msgvar = Mat_VarCreate(fieldnames[1],
-                                         MAT_C_CHAR, MAT_T_UTF8,
-                                         2, msgdim,
-                                         BUFFER, 0);
-        Mat_VarSetStructFieldByName(topstruct, fieldnames[1], i, msgvar);
+        struct hashtable_itr *sig_itr = hashtable_iterator(msg->ts_hash);
+        do {
+            char *signame = hashtable_iterator_key(sig_itr);
+            double *sigdata = hashtable_iterator_value(sig_itr);
 
-        // Database name
-        signal_key = nextfield(signal_key, BUFFER);
-        size_t dbcdim[2] = {1, strlen(BUFFER)};
-        matvar_t *dbcvar = Mat_VarCreate(fieldnames[2],
-                                         MAT_C_CHAR, MAT_T_UTF8,
-                                         2, dbcdim,
-                                         BUFFER, 0);
-        Mat_VarSetStructFieldByName(topstruct, fieldnames[2], i, dbcvar);
+            // Channel number
+            set_in_struct_array(topstruct, 0, i, 1, &msg_key->bus);
 
-        size_t dim[2] = {timeSeries->n, 1};
-        // Time vector
-        matvar_t *timevar = Mat_VarCreate(signal_key,
-                                          MAT_C_DOUBLE, MAT_T_DOUBLE,
-                                          2, dim,
-                                          timeSeries->time,
-                                          0);//MAT_F_DONT_COPY_DATA);
-        Mat_VarSetStructFieldByName(topstruct, fieldnames[3], i, timevar);
+            // DBC name
+            set_in_struct_array(topstruct, 1, i,
+                                strlen(msg->dbcname),
+                                msg->dbcname);
 
-        // Data vector
-        matvar_t *datavar = Mat_VarCreate(signal_key,
-                                          MAT_C_DOUBLE, MAT_T_DOUBLE,
-                                          2, dim,
-                                          timeSeries->value,
-                                          MAT_F_DONT_COPY_DATA);
-        Mat_VarSetStructFieldByName(topstruct, fieldnames[4], i, datavar);
+            // Message name
+            set_in_struct_array(topstruct, 2, i,
+                                strlen(msg->name),
+                                msg->name);
 
-        i++;
-    } while (hashtable_iterator_advance(itr));
+            // Signal name
+            set_in_struct_array(topstruct, 3, i,
+                                strlen(signame),
+                                signame);
 
-    free(itr);
+            // Time vector
+            set_in_struct_array(topstruct, 4, i,
+                                msg->n,
+                                msg->time);
+
+            // Data vector
+            set_in_struct_array(topstruct, 5, i,
+                                msg->n,
+                                sigdata);
+
+            i++;
+
+        } while (hashtable_iterator_advance(sig_itr));
+        free(sig_itr);
+
+    } while (hashtable_iterator_advance(msg_itr));
+    free(msg_itr);
 
     Mat_VarWrite(matfile, topstruct, 0);
     Mat_VarFree(topstruct);
