@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.0)
-project(libcanblf)
 
 add_library(canblf
   blfapi.c blfapi.h

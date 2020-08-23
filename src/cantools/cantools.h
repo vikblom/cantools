@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <time.h>
 
-// Public header for the cantomat tool.
 
 /* CAN message type */
 typedef struct {
