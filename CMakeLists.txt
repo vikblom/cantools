@@ -14,9 +14,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 #endif()
 
-# FIXME: Ugly hack
-include_directories(src/hashtable src/cantomat)
-
 add_subdirectory(src/cantomat)
 
 add_subdirectory(src/libcandbc)

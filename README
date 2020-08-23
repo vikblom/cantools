@@ -37,7 +37,7 @@ Compiling native Windows exe with MSYS2
 ====================
 Use the "MSYS2 MINGW 64-bit" terminal
 - Install compiler toolchain
-      pacman -Syu --needed mingw-w64-x86_64-{gcc,cmake}
+      pacman -Syu --needed make mingw-w64-x86_64-{gcc,cmake}
 - Install dependencies
       pacman -Syu --needed mingw-w64-x86_64-{matio,zlib}
 - Build cantomat
