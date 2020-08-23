@@ -24,8 +24,8 @@
 #include <matio.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <matio.h>
 
-#include "mdftomat.h"
 #include "mdfcg.h"
 #include "mdffilter.h"
 #include "mdffile.h"
@@ -75,7 +75,7 @@ sanitize_name(const char *in)
 }
 
 static void
-mat_write_signal(const mdf_t *const mdf, 
+mat_write_signal(const mdf_t *const mdf,
                  const uint32_t can_channel,
                  const uint32_t number_of_records,
                  const uint16_t channel_type,
@@ -227,7 +227,7 @@ mdfPrintHeaderInfo(const mdf_t *const mdf)
   FIELD_PRINT("Organization = ", hd_block->organization);
   FIELD_PRINT("Project      = ", hd_block->project);
   FIELD_PRINT("Measurement  = ", hd_block->measurement_id);
-  printf("Byte Order   = %s\n", 
+  printf("Byte Order   = %s\n",
          (id_block->byte_order==0)?"Little Endian":"Big Endian");
   printf("Version      = %u\n", id_block->version_number);
   FIELD_PRINT("File Id      = ", id_block->file_identifier);

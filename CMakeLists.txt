@@ -14,7 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 #endif()
 
-add_subdirectory(src/cantomat)
+add_subdirectory(src/cantools)
 
 add_subdirectory(src/libcandbc)
 #add_subdirectory(src/libcanasc)
@@ -23,6 +23,6 @@ add_subdirectory(src/libcanblf)
 #add_subdirectory(src/libcanvsb)
 add_subdirectory(src/hashtable)
 
-add_subdirectory(src/dbccopy)
-add_subdirectory(src/dbcls)
-add_subdirectory(src/matdump)
+add_subdirectory(apps/dbccopy)
+add_subdirectory(apps/dbcls)
+add_subdirectory(apps/matdump)

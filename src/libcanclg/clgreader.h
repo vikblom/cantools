@@ -19,7 +19,7 @@
 
 
 #include <stdint.h>
-#include "cantomat.h"
+#include "cantools.h"
 
 typedef struct {
   uint8_t  log_time_array[4];   /* time */

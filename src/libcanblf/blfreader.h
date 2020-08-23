@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "cantomat.h"
+#include "cantools.h"
 
 #ifdef __cplusplus
 extern "C" {

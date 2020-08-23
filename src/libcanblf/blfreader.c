@@ -18,7 +18,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "cantomat.h"
+#include "blfreader.h"
 #include "blfapi.h"
 
 extern int verbose_flag;

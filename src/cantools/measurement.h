@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 
-#include "cantomat.h"
+#include "cantools.h"
 #include "hashtable.h"
 #include "busassignment.h"
 #include "signalformat.h"

@@ -19,7 +19,7 @@
 
 
 #include <stdint.h>
-#include "cantomat.h"
+#include "cantools.h"
 
 /*
  * vs3bin data structures, see
