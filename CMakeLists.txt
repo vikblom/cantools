@@ -23,6 +23,4 @@ add_subdirectory(src/libcanblf)
 #add_subdirectory(src/libcanvsb)
 add_subdirectory(src/hashtable)
 
-add_subdirectory(apps/dbccopy)
-add_subdirectory(apps/dbcls)
-add_subdirectory(apps/matdump)
+add_subdirectory(apps)

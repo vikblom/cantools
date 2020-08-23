@@ -4,7 +4,6 @@ add_library(cantools
   busassignment.c cantools.c matwrite.c
   measurement.c messagedecoder.c messagehash.c signalformat.c)
 
-target_compile_definitions(cantools PRIVATE VERSION="0")
 target_include_directories(cantools PUBLIC .)
 
 IF(WIN32)
