@@ -24,3 +24,5 @@ TAGS
 # Artifact directories
 build
 logs
+log
+bin

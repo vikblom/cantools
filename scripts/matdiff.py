@@ -5,9 +5,9 @@ from scipy.io import loadmat
 
 def keyer(tup):
     bus = str(tup[0])
-    channel = tup[1].tostring().decode('utf32')
-    message = tup[2].tostring().decode('utf32')
-    signal = tup[3].tostring().decode('utf32')
+    channel = tup[1].tobytes().decode('utf32')
+    message = tup[2].tobytes().decode('utf32')
+    signal = tup[3].tobytes().decode('utf32')
     return f"{bus}::{channel}::{message}::{signal}"
 
 
@@ -27,10 +27,11 @@ def main(this_file, that_file):
 
     if not this_keys <= that_keys:
         print("Keys removed!")
+        print(this_keys - that_keys)
 
     if not that_keys <= this_keys:
-        print(that_keys - this_keys)
         print("Keys added!")
+        print(that_keys - this_keys)
 
     common_keys = this_keys & that_keys
 
