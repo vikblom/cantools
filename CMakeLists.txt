@@ -12,6 +12,7 @@ endif()
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 #endif()
 
+
 add_subdirectory(src/cantools)
 
 add_subdirectory(src/libcandbc)
