@@ -30,16 +30,11 @@
 //#include "vsbreader.h"
 
 
+const char *program_name;
 int verbose_flag = 0;
 int debug_flag   = 0;
 
-const char *program_name;
 
-static void usage_error(void)
-{
-    fprintf(stderr, "Type '%s --help' for more information\n",program_name);
-    exit(1);
-}
 
 static void help(void)
 {
@@ -50,11 +45,8 @@ static void help(void)
             "Options:\n"
             "  -b, --bus <busid>          specify bus for next database\n"
             "  -d, --dbc <dbcfile>        assign database to previously specified bus\n"
-            "  -a, --asc <ascfile>        ASC input file\n"
-            "  -B, --blf <blffile>        BLF input file\n"
-            "  -c, --clg <clgfile>        CLG input file\n"
-            "  -v, --vsb <vsbfile>        VSB input file\n"
-            "  -m, --mat <matfile>        MAT output file\n"
+            "  -i, --in <infile>          input file, default to stdin. \n"
+            "  -o, --out <outfile>        output file, defaults to stdout. \n"
             "  -t, --timeres <nanosec>    time resolution\n"
             "      --verbose              verbose output\n"
             "      --brief                brief output (default)\n"
@@ -64,13 +56,13 @@ static void help(void)
             program_name);
 }
 
-int cantomat(char *inputFilename,
+int cantomat(char *in_file,
              parserFunction_t parserFunction,
              busAssignment_t *busAssignment,
-             char *matFilename)
+             char *out_file)
 {
     // READ
-    struct hashtable *can_hashmap = read_messages(inputFilename,
+    struct hashtable *can_hashmap = read_messages(in_file,
                                                   parserFunction);
     if (!can_hashmap) {
         fprintf(stderr, "Reading msgs from input file failed.\n");
@@ -90,7 +82,7 @@ int cantomat(char *inputFilename,
         fprintf(stderr, "Decoded %d timeseries\n", signal_count);
 
     // WRITE
-    matWrite(can_hashmap, signal_count, matFilename);
+    matWrite(can_hashmap, signal_count, out_file);
 
     destroy_messages(can_hashmap);
 
@@ -100,19 +92,18 @@ int cantomat(char *inputFilename,
 
 int main(int argc, char **argv)
 {
-    char *inputFilename = NULL;
-    int inputFiles = 0;
-    char *matFilename = NULL;
+    program_name = argv[0];
+
+    // Program arguments
+    char *in_file = NULL;
+    char *out_file = NULL;
     busAssignment_t *busAssignment = busAssignment_create();
     int bus = -1;
-    int ret = 1;
     sint32 timeResolution = 0;
-    parserFunction_t parserFunction = NULL;
-
-    program_name = argv[0];
 
     /* parse arguments */
     while (1) {
+
         static struct option long_options[] = {
             /* These options set a flag. */
             {"verbose", no_argument,       &verbose_flag, 1},
@@ -120,24 +111,22 @@ int main(int argc, char **argv)
             {"debug",   no_argument,       &debug_flag,   1},
             /* These options don't set a flag.
                We distinguish them by their indices. */
-            {"asc",     required_argument, 0, 'a'},
-            {"blf",     required_argument, 0, 'B'},
-            {"bus",     required_argument, 0, 'b'},
-            {"clg",     required_argument, 0, 'c'},
-            {"dbc",     required_argument, 0, 'd'},
-            {"mat",     required_argument, 0, 'm'},
-            {"timeres", required_argument, 0, 't'},
-            {"vsb",     required_argument, 0, 'v'},
-            {"help",    no_argument,    NULL, 'h'},
+            {"in",      required_argument, NULL, 'i'},
+            {"out",     required_argument, NULL, 'o'},
+            {"bus",     required_argument, NULL, 'b'},
+            {"dbc",     required_argument, NULL, 'd'},
+            {"timeres", required_argument, NULL, 't'},
+            {"help",    no_argument,       NULL, 'h'},
             {0, 0, 0, 0}
         };
 
+        // Also short options, with req. arguments. as above
+        char short_options[] = "i:o:b:d:t:h";
+
         /* getopt_long stores the option index here. */
         int option_index = 0;
-        int c;
-
-        c = getopt_long(argc, argv, "a:B:b:c:d:f:m:t:v:",
-                        long_options, &option_index);
+        int c = getopt_long(argc, argv, short_options,
+                            long_options, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1) break;
@@ -145,29 +134,27 @@ int main(int argc, char **argv)
         switch (c) {
         case 0:
             break;
-        case 'B':
-            inputFilename = optarg;
-            parserFunction = blfReader_processFile;
-            inputFiles++;
+
+        case 'i':
+            if (in_file) {
+                fprintf(stderr, "Multiple input files not supported!\n");
+                exit(1);
+            }
+            in_file = optarg;
             break;
-        /* case 'a': */
-        /*     inputFilename = optarg; */
-        /*     parserFunction = ascReader_processFile; */
-        /*     inputFiles++; */
-        /*     break; */
-        /* case 'c': */
-        /*     inputFilename = optarg; */
-        /*     parserFunction = clgReader_processFile; */
-        /*     inputFiles++; */
-        /*     break; */
-        /* case 'v': */
-        /*     inputFilename = optarg; */
-        /*     parserFunction = vsbReader_processFile; */
-        /*     inputFiles++; */
-        /*     break; */
+
+        case 'o':
+            if (out_file) {
+                fprintf(stderr, "Multiple output files not supported!\n");
+                exit(1);
+            }
+            out_file = optarg;
+            break;
+
         case 'b':
             bus = atoi(optarg);
             break;
+
         case 'd':
             if (verbose_flag) {
                 if (bus == -1) {
@@ -181,64 +168,52 @@ int main(int argc, char **argv)
             /* reset bus specification */
             bus = -1;
             break;
-        case 'm':
-            matFilename = optarg;
-            break;
+
         case 't':
             timeResolution = atoi(optarg);
             break;
-        case 'h': help(); exit(0);   break;
+
+        case 'h':
+            help();
+            exit(0);
+            break;
+
         case '?':
             /* getopt_long already printed an error message. */
-            usage_error();
             break;
+
         default:
             fprintf(stderr, "error: unknown option %c\n", c);
-            busAssignment_free(busAssignment);
-            usage_error();
+            goto exit;
         }
     }
 
-#ifdef YYDEBUG
-    if (debug_flag) {
-        extern int yydebug;
-        yydebug=0; // Skip Bison debug, it is very noisy.
-    }
-#endif
-
-    /* diagnose options */
-    if (inputFiles != 1) {
-        fprintf(stderr, "error: please specify exactly one input file\n");
-        busAssignment_free(busAssignment);
-        usage_error();
-    }
-
-    if (matFilename == NULL) {
+    if (out_file == NULL) {
         fprintf(stderr, "error: MAT output filename not specified\n");
-        busAssignment_free(busAssignment);
-        usage_error();
+        goto exit;
     }
 
     /* parse DBC files */
     if (busAssignment_parseDBC(busAssignment)) {
-        fprintf(stderr, "error: parsing DBC file failed\n");
-        exit(1);
+        goto exit;
     }
 
-    /* parse input file */
+    // The actual decision is down in measurement.c...
     if (verbose_flag) {
-        if (inputFilename != NULL) {
+        if (in_file != NULL) {
             fprintf(stderr, "Parsing input file %s\n",
-                    inputFilename ? inputFilename : "<stdin>");
+                    in_file ? in_file : "<stdin>");
         }
     }
 
-    ret = cantomat(inputFilename,
-                   parserFunction,
-                   busAssignment,
-                   matFilename);
+    // FIXME: Dispatch on file extension.
+    parserFunction_t parserFunction = blfReader_processFile;
 
-usage_error:
+    int ret = cantomat(in_file,
+                       parserFunction,
+                       busAssignment,
+                       out_file);
+exit:
     busAssignment_free(busAssignment);
     return ret;
 }
