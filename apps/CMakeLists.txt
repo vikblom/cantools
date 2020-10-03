@@ -6,8 +6,6 @@ exec_program(
     ARGS "describe --tags"
     OUTPUT_VARIABLE GIT_VERSION)
 
-
-
 # CanToMat
 add_executable(cantomat cantomat.c)
 target_link_libraries(cantomat cantools candbc canhash canblf)
