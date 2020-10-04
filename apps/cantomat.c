@@ -22,12 +22,16 @@
 #include "cantools.h"
 #include "busassignment.h"
 #include "measurement.h"
-#include "matwrite.h"
 
+// readers
 //#include "ascreader.h"
 //#include "clgreader.h"
 #include "blfreader.h"
 //#include "vsbreader.h"
+
+// writers
+#include "matwrite.h"
+#include "h5write.h"
 
 
 const char *program_name;
@@ -99,7 +103,7 @@ int cantomat(char *in_file,
     if (str_ends_with(out_file, ".mat")) {
         matWrite(can_hashmap, out_file);
     } else if (str_ends_with(out_file, ".h5")) {
-        // TODO
+        write_h5(can_hashmap, out_file);
     }
 
     destroy_messages(can_hashmap);
