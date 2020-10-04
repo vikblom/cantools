@@ -117,8 +117,9 @@ static void canframe_callback(canMessage_t *canMessage, void *cb_data)
 
 
 /*
- * process CAN trace file with given bus assignment and output
- * signal format
+ * process CAN trace file with given input parser
+ *
+ * If filename is NULL, uses stdin instead.
  */
 struct hashtable *read_messages(const char *filename,
                                 parserFunction_t parserFunction)

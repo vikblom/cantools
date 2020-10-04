@@ -35,6 +35,18 @@ int verbose_flag = 0;
 int debug_flag   = 0;
 
 
+static int str_ends_with(char *str, char *tail)
+{
+    int str_len = strlen(str);
+    int tail_len = strlen(tail);
+
+    if (str_len < tail_len)
+        return 0;
+
+    char *needle = str + str_len - tail_len;
+
+    return 0 == strcmp(needle, tail);
+}
 
 
 static void help(void)
@@ -83,7 +95,12 @@ int cantomat(char *in_file,
         fprintf(stderr, "Decoded %d timeseries\n", signal_count);
 
     // WRITE
-    matWrite(can_hashmap, signal_count, out_file);
+    // FIXME: Dispatch on out_file ext
+    if (str_ends_with(out_file, ".mat")) {
+        matWrite(can_hashmap, signal_count, out_file);
+    } else if (str_ends_with(out_file, ".h5")) {
+        // TODO
+    }
 
     destroy_messages(can_hashmap);
 
