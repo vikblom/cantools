@@ -44,13 +44,11 @@ const enum matio_types FIELD_TYPES[] = {MAT_T_UINT8,
 const int FIELD_OPTS[] = {0, 0, 0, 0, MAT_F_DONT_COPY_DATA, MAT_F_DONT_COPY_DATA};
 
 
-
-
-void set_in_struct_array(matvar_t *struct_array,
-                         int nth_field,
-                         int array_index,
-                         size_t size,
-                         void *data)
+static void set_in_struct_array(matvar_t *struct_array,
+                                int nth_field,
+                                int array_index,
+                                size_t size,
+                                void *data)
 {
     size_t dim[] = {1, size};
     matvar_t *var = Mat_VarCreate(FIELD_NAMES[nth_field],
@@ -65,13 +63,29 @@ void set_in_struct_array(matvar_t *struct_array,
 }
 
 
+static int count_signals(struct hashtable *msg_hash)
+{
+    int n = 0;
+    struct hashtable_itr *msg_itr = hashtable_iterator(msg_hash);
+    do {
+        msg_series_t *msg = hashtable_iterator_value(msg_itr);
+        if (!msg->ts_hash)
+            continue;
+        n += hashtable_count(msg->ts_hash);
+    } while (hashtable_iterator_advance(msg_itr));
+    return n;
+}
+
+
 /*
  * matWrite - write signals from measurement structure to MAT file
  */
-int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
+int matWrite(struct hashtable *msg_hash, const char *outFileName)
 {
+    int n_signals = count_signals(msg_hash);
+
     /* loop over all time series */
-    if (hashtable_count(msg_hash) == 0 || count == 0) {
+    if (hashtable_count(msg_hash) == 0 || n_signals == 0) {
         fprintf(stderr, "error: measurement empty, nothing to write\n");
         return 1;
     }
@@ -83,7 +97,7 @@ int matWrite(struct hashtable *msg_hash, int count, const char *outFileName)
     }
 
     const char *fieldnames[6] = {"bus", "dbc", "msg", "signal", "time", "data"};
-    size_t structdim[2] = {1, count};
+    size_t structdim[2] = {1, n_signals};
     matvar_t* topstruct = Mat_VarCreateStruct("data",
                                               2, structdim,
                                               fieldnames, 6);

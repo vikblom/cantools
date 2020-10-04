@@ -97,7 +97,7 @@ int cantomat(char *in_file,
     // WRITE
     // FIXME: Dispatch on out_file ext
     if (str_ends_with(out_file, ".mat")) {
-        matWrite(can_hashmap, signal_count, out_file);
+        matWrite(can_hashmap, out_file);
     } else if (str_ends_with(out_file, ".h5")) {
         // TODO
     }
