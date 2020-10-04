@@ -36,6 +36,7 @@ int debug_flag   = 0;
 
 
 
+
 static void help(void)
 {
     fprintf(stderr,
@@ -93,6 +94,7 @@ int cantomat(char *in_file,
 int main(int argc, char **argv)
 {
     program_name = argv[0];
+    int ret = 1; // default to failure
 
     // Program arguments
     char *in_file = NULL;
@@ -189,7 +191,7 @@ int main(int argc, char **argv)
     }
 
     if (out_file == NULL) {
-        fprintf(stderr, "error: MAT output filename not specified\n");
+        fprintf(stderr, "error: Output file not specified\n");
         goto exit;
     }
 
@@ -206,13 +208,13 @@ int main(int argc, char **argv)
         }
     }
 
-    // FIXME: Dispatch on file extension.
+    // FIXME: Dispatch on input file extension.
     parserFunction_t parserFunction = blfReader_processFile;
 
-    int ret = cantomat(in_file,
-                       parserFunction,
-                       busAssignment,
-                       out_file);
+    ret = cantomat(in_file,
+                   parserFunction,
+                   busAssignment,
+                   out_file);
 exit:
     busAssignment_free(busAssignment);
     return ret;
