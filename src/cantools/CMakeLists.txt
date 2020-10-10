@@ -17,10 +17,10 @@ target_link_libraries(cantools PRIVATE ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
 
 # DEP: MATIO
 IF(WIN32)
-  target_link_libraries(cantools PRIVATE
+  target_link_libraries(cantools PUBLIC
     -l:libmatio.a -l:libhdf5.a -l:libszip.a -l:libz.a
     candbc canhash canblf)
 ELSE()
-  target_link_libraries(cantools PRIVATE
+  target_link_libraries(cantools PUBLIC
     -lmatio -lz candbc canhash canblf)
 ENDIF()

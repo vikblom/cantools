@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-#include "cantools.h"
 #include "busassignment.h"
 #include "measurement.h"
 
@@ -89,8 +88,7 @@ int cantomat(char *in_file,
         fprintf(stderr, "Read %d messages\n", hashtable_count(can_hashmap));
 
     // DECODE
-    int signal_count;
-    signal_count = can_decode(can_hashmap, busAssignment);
+    int signal_count = can_decode(can_hashmap, busAssignment);
     if (signal_count < 0) {
         fprintf(stderr, "Reading signals from msgs failed.\n");
         return 1;

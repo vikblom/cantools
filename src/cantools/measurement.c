@@ -20,7 +20,6 @@
 #include "measurement.h"
 #include "busassignment.h"
 #include "messagehash.h"
-#include "signalformat.h"
 #include "hashtable.h"
 #include "hashtable_itr.h"
 #include "messagedecoder.h"
@@ -180,32 +179,14 @@ static message_t *find_msg_spec(frame_key_t *key,
                                 busAssignment_t *bus_lib,
                                 char **dbcname_loc)
 {
-    message_t *candidate, *match = NULL;
-    busAssignmentEntry_t entry;
+    message_t *match = NULL;
+    // Find match in dbc's explicitly set on this bus.
+    match = get_msg_spec(bus_lib, key->id, key->bus, dbcname_loc);
+    if (match)
+        return match;
 
-    for (int i = 0; i < bus_lib->n ; i++) {
-        entry = bus_lib->list[i];
-        if (entry.bus == key->bus) {
-            if (candidate = hashtable_search(entry.messageHash, &key->id)) {
-                match = candidate;
-                *dbcname_loc = entry.basename;
-                return match;
-            }
-        }
-    }
-
-    for (int i = 0; i < bus_lib->n ; i++) {
-        entry = bus_lib->list[i];
-        if (entry.bus == -1) {
-            if (candidate = hashtable_search(entry.messageHash, &key->id)) {
-                match = candidate;
-                *dbcname_loc = entry.basename;
-                return match;
-            }
-        }
-    }
-
-    return NULL;
+    // else find match in dbc that are used for any bus.
+    return get_msg_spec(bus_lib, key->id, -1, dbcname_loc);
 }
 
 

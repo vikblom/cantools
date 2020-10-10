@@ -17,6 +17,20 @@
 #include <stdio.h>
 #include <string.h>
 #include "busassignment.h"
+#include "messagehash.h"
+#include "dbcmodel.h"
+
+struct busAssignmentEntry_s {
+    int bus;
+    char *filename;
+    char *basename;
+    messageHash_t *messageHash;
+};
+
+struct busAssignment_s {
+    int n;
+    struct busAssignmentEntry_s *list; /* array of n busAssigmentEntry_t's */
+};
 
 extern int verbose_flag;
 
@@ -118,4 +132,32 @@ void busAssignment_free(busAssignment_t *busAssignment)
         if(busAssignment->list != NULL) free(busAssignment->list);
     }
     free(busAssignment);
+}
+
+/**
+ * @brief      Find message spec. in bus library.
+ *
+ * @details    Finds the first match of ID in the parsed bus libraries.
+ *             Only buses matching argument bus as used.
+ *             bus=-1 means match all buses
+ *             Writes the basename of the used dbc into basename_used.
+ *             Returns NULL if no match was found.
+ */
+message_t *get_msg_spec(busAssignment_t *bus_lib,
+                        int id,
+                        int bus,
+                        char **basename_used)
+{
+    message_t *match = NULL;
+    for (int i = 0; i < bus_lib->n ; i++) {
+        busAssignmentEntry_t entry = bus_lib->list[i];
+        if (entry.bus == bus) {
+            if ((match = hashtable_search(entry.messageHash, &id))) {
+                *basename_used = entry.basename;
+                return match;
+            }
+        }
+    }
+
+    return NULL;
 }

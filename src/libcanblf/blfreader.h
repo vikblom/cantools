@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "cantools.h"
+#include "measurement.h"
 
 #ifdef __cplusplus
 extern "C" {

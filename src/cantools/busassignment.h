@@ -17,24 +17,24 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "messagehash.h"
+#include "dbcmodel.h"
 
-typedef struct {
-    int bus;
-    char *filename;
-    char *basename;
-    messageHash_t *messageHash;
-} busAssignmentEntry_t;
-
-typedef struct {
-    int n;
-    busAssignmentEntry_t *list; /* array of n busAssigmentEntry_t's */
-} busAssignment_t;
+// Forward declare, hide the struct impl.
+struct busAssignmentEntry_s;
+struct busAssignment_s;
+typedef struct busAssignmentEntry_s busAssignmentEntry_t;
+typedef struct busAssignment_s busAssignment_t;
 
 busAssignment_t *busAssignment_create(void);
 void busAssignment_associate(busAssignment_t *busAssigment,
                              int bus, char *filename);
 void busAssignment_free(busAssignment_t *busAssigment);
 int busAssignment_parseDBC(busAssignment_t *busAssignment);
+
+
+message_t *get_msg_spec(busAssignment_t *bus_lib,
+                        int id,
+                        int bus,
+                        char **basename_used);
 
 #endif
