@@ -84,8 +84,6 @@ int cantomat(char *in_file,
         fprintf(stderr, "Reading msgs from input file failed.\n");
         return 1;
     }
-    if (verbose_flag)
-        fprintf(stderr, "Read %d messages\n", hashtable_count(can_hashmap));
 
     // DECODE
     int signal_count = can_decode(can_hashmap, busAssignment);

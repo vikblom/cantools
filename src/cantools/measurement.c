@@ -207,6 +207,7 @@ int can_decode(struct hashtable *msg_hashmap, busAssignment_t *bus_lib)
         frame_key_t *frame_key = hashtable_iterator_key(itr);
         msg_series_t *msg = hashtable_iterator_value(itr);
 
+
         message_t *msg_spec = find_msg_spec(frame_key,
                                             bus_lib,
                                             &msg->dbcname);
