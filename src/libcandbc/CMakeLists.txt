@@ -12,4 +12,4 @@ project(libcandbc)
 
 add_library(candbc dbcmodel.c dbcreader.c dbcwriter.c lexer.c parser.c)
 target_link_libraries(candbc -lm)
-target_include_directories(candbc PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
+target_include_directories(candbc PUBLIC ${CMAKE_CURRENT_LIST_DIR})

@@ -1,11 +1,6 @@
 Issues
 ===================
 * Cmake compilation is using an ugly hack to let everyone reach everything.
-* Linking against libmatio from msys2 repositories does not work.
-  Executable fails with error msg:
-  "The procedure entry point H5Rdereference coult not be
-  located in the dynamic library
-  C:\msys64\mingw64\bin\libmatio-9.dll"
 * Extended CAN msgs with dlc > 8 are not even read from blf file.
   Most likely they have ID BL_OBJ_TYPE_reserved_5=115
   which we have no way of parsing?
@@ -19,16 +14,12 @@ Notes
 General Information
 ===================
 
-cantools is a set of libraries and command line tools for handling
-ASC, BLF, CLG, VSB, MDF, and DBC files from Vector-Informatik and
-others. The tools can be used to analyze and convert the data to other
-formats:
+Tools around CAN logfiles, mostly Vector's BLF format.
+
+Note: After fork only .blf is supported as input. For outputs .mat and .h5 are available.
 
 * dbcls lists the contents of a DBC file.
-* cantomat converts log files in ASC, BLF, CLG, VSB format to a MAT
-* file (MATLAB format)
-* mdftomat converts log files in MDF format to a MAT file (up to MDF
-  version 3.x)
+* cantomat converts log files in BLF to MAT or HDF5.
 * matdump displays the content of a MAT file as ASCII text
 * dbccopy copies a DBC file
 
@@ -37,17 +28,22 @@ Compiling native Windows exe with MSYS2
 ====================
 Use the "MSYS2 MINGW 64-bit" terminal
 - Install compiler toolchain
-      pacman -Syu --needed make mingw-w64-x86_64-{gcc,cmake}
+```
+pacman -Syu --needed make mingw-w64-x86_64-{gcc,cmake}
+```
 - Install dependencies
-      pacman -Syu --needed mingw-w64-x86_64-{matio,zlib}
+```
+pacman -Syu --needed mingw-w64-x86_64-{hdf5,matio,zlib}
+```
 - Build cantomat
-      cmake -G"MSYS Makefiles" -B build .
-      make -C build
+```
+cmake -G"MSYS Makefiles" -B build .
+make -C build
+```
 
  Compiling in Windows Subsystem for Linux (WSL)
 ====================
+Compilation in WSL is much similar, only installing dependencies are different:
+```
 sudo apt-get install gcc libz-dev libmatio-dev pkg-config flex bison check libglib2.0 subversion automake
-git clone https://github.com/aheit/cantools cantools-code
-cd cantools-code
-./configure
-make
+```
