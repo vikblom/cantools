@@ -37,20 +37,6 @@ int verbose_flag = 0;
 int debug_flag   = 0;
 
 
-static int str_ends_with(char *str, char *tail)
-{
-    int str_len = strlen(str);
-    int tail_len = strlen(tail);
-
-    if (str_len < tail_len)
-        return 0;
-
-    char *needle = str + str_len - tail_len;
-
-    return 0 == strcmp(needle, tail);
-}
-
-
 static void help(void)
 {
     fprintf(stderr,
@@ -71,11 +57,14 @@ static void help(void)
             program_name);
 }
 
+
 int cantomat(char *in_file,
-             parserFunction_t parserFunction,
              busAssignment_t *busAssignment,
              char *out_file)
 {
+    // FIXME: Dispatch on input file extension.
+    parserFunction_t parserFunction = blfReader_processFile;
+
     // READ
     struct hashtable *can_hashmap = read_messages(in_file,
                                                   parserFunction);
@@ -222,11 +211,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // FIXME: Dispatch on input file extension.
-    parserFunction_t parserFunction = blfReader_processFile;
-
     ret = cantomat(in_file,
-                   parserFunction,
                    busAssignment,
                    out_file);
 exit:
