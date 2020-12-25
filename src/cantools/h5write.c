@@ -5,9 +5,9 @@
 
 #include "measurement.h"
 #include "hashtable_itr.h"
+#include "writer.h"
 
 // https://support.hdfgroup.org/HDF5/doc/HL/RM_H5LT.html
-
 
 
 /*
@@ -75,3 +75,11 @@ exit:
     if (h5_file > 0) H5Fclose(h5_file);
     return ret;
 }
+
+
+// Export this format so writer.c can use it.
+can_writer_t hdf5_writer = {
+    .name="hdf5",
+    .ext="h5",
+    .write_fcn=write_h5
+};

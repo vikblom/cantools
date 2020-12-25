@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 add_library(cantools
   busassignment.c matwrite.c h5write.c measurement.c
-  messagedecoder.c messagehash.c signalformat.c)
+  messagedecoder.c messagehash.c signalformat.c
+  writer.c)
 
 target_include_directories(cantools PUBLIC .)
 

@@ -25,7 +25,7 @@
 #include <matio.h>
 #include "measurement.h"
 #include "hashtable_itr.h"
-
+#include "writer.h"
 
 // TODO: Use a "spec" struct instead. Also include function handle?
 const char *FIELD_NAMES[6] = {"bus", "dbc", "msg", "signal", "time", "data"};
@@ -166,3 +166,11 @@ int matWrite(struct hashtable *msg_hash, const char *outFileName)
 
     return 0;
 }
+
+
+// Export this format so writer.c can use it.
+can_writer_t matfile_writer = {
+    .name="matfile",
+    .ext="mat",
+    .write_fcn=matWrite
+};

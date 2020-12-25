@@ -28,9 +28,8 @@
 #include "blfreader.h"
 //#include "vsbreader.h"
 
-// writers
-#include "matwrite.h"
-#include "h5write.h"
+// writers - dispatched through central station.
+#include "writer.h"
 
 
 const char *program_name;
@@ -96,14 +95,13 @@ int cantomat(char *in_file,
 
     // WRITE
     // FIXME: Dispatch on out_file ext
-    if (str_ends_with(out_file, ".mat")) {
-        matWrite(can_hashmap, out_file);
-    } else if (str_ends_with(out_file, ".h5")) {
-        write_h5(can_hashmap, out_file);
-    }
+    writer_f writer = guess_writer(out_file);
+    if (writer)
+        writer(can_hashmap, out_file);
+    else
+        fprintf(stderr, "Cannot guess output format, nothing written.\n");
 
     destroy_messages(can_hashmap);
-
     return 0;
 }
 
@@ -122,7 +120,6 @@ int main(int argc, char **argv)
 
     /* parse arguments */
     while (1) {
-
         static struct option long_options[] = {
             /* These options set a flag. */
             {"verbose", no_argument,       &verbose_flag, 1},
